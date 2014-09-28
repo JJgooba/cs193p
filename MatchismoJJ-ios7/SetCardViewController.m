@@ -50,6 +50,19 @@ static const int FONT_SIZE = 12;
     }
 }
 
+-(UIView *)cardViewForCard:(Card *)card withCGRect:(CGRect)rect //overriding from parent class
+{
+    SetCardView *cardView = [[SetCardView alloc] initWithFrame:rect];
+    NSLog(@"the rect origin is (%f, %f) and size is %f x %f", rect.origin.x, rect.origin.y, rect.size.width, rect.size.height);
+    SetCard * setCard = (SetCard *)card;
+    cardView.number = setCard.number;
+    cardView.symbol = setCard.symbol;
+    cardView.shading = setCard.shading;
+    cardView.color = setCard.color;
+    
+    return cardView;
+}
+
 
 -(NSAttributedString *)attributedStringFromCard:(Card *)card
 {
