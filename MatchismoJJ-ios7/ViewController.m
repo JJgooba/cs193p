@@ -181,6 +181,7 @@
 }
 
 -(void) placeCard:(Card *)card atIndex:(NSUInteger) index
+// places card in the GUI at (row, col) as derived from index
 {
     if (card) {
         NSUInteger row = ((self.grid.rowCount * self.grid.columnCount) / index) + 1;
