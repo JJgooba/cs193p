@@ -34,7 +34,10 @@
 @implementation ViewController
 
 -(NSMutableArray *) cardViews {
-    return nil; //to be overridden in inheriting classes
+    if (!_cardViews) {
+        _cardViews = [[NSMutableArray alloc] init];
+    }
+    return _cardViews;
 }
 
 -(Grid *) grid
@@ -42,6 +45,7 @@
     if (!_grid) {
         _grid = [[Grid alloc] init];
         _grid.size = self.cardContainingView.bounds.size;
+        NSLog(@"grid size is %.0f x %.0f",_grid.size.width, _grid.size.height);
         _grid.cellAspectRatio = self.cardAspectRatio;
         _grid.minimumNumberOfCells = self.minNumCards;
     }
@@ -58,7 +62,8 @@
 
 -(CardMatchingGame *)game {  //lazy instantiation of game
     if (!_game) {
-        _game = [[CardMatchingGame alloc ]initWithCardCount:[self.cardButtons count]
+//        _game = [[CardMatchingGame alloc ]initWithCardCount:[self.cardButtons count]
+        _game = [[CardMatchingGame alloc ]initWithCardCount:self.minNumCards
                                                   usingDeck:[self createDeck] matchingNumCards:[self numCardsInGame]] ;
     }
     return _game;
@@ -158,7 +163,7 @@
     
     NSLog(@"game is %@", self.game == nil ? @"nil" : @"not nil");
     NSLog(@"num rows = %lu, num cols = %lu",self.grid.rowCount, (unsigned long)self.grid.columnCount);
-    for (int i = 1; i < (self.grid.rowCount * self.grid.columnCount); i++) {
+    for (int i = 0; i < (self.grid.rowCount * self.grid.columnCount); i++) {
         Card *card = [self.game cardAtIndex:i];
         [self placeCard:card atIndex:i];
     }
@@ -175,29 +180,31 @@
 
 }
 
--(UIView *)cardViewForCard:(Card *)card
+-(UIView *)cardViewForCard:(Card *)card withCGRect:(CGRect)rect
 {
-    return nil; //implement in inheriting class method
+    return nil; //implement in subclass
 }
 
 -(void) placeCard:(Card *)card atIndex:(NSUInteger) index
 // places card in the GUI at (row, col) as derived from index
 {
     if (card) {
-        NSUInteger row = ((self.grid.rowCount * self.grid.columnCount) / index) + 1;
-        NSUInteger col = index % (self.grid.columnCount + 1);
-        self.cardViews[index] = [self cardViewForCard:card];
+        NSUInteger row = (index  / self.grid.columnCount);
+        NSUInteger col = index - (row * self.grid.columnCount);
+        NSLog(@"placing card #%d (%@) at row %lu col %lu", index, card.contents, (unsigned long)row, (unsigned long)col);
+        [self.cardViews addObject:[self cardViewForCard:card withCGRect:[self.grid frameOfCellAtRow:row inColumn:col]]];
         [self.cardContainingView addSubview:self.cardViews[index]];
     }
 }
 
--(void) layoutAllCards {
+/* -(void) layoutAllCards {
     for (int row = 1; row < self.grid.rowCount; row++)
         for (int col = 1; col < self.grid.columnCount; col++){
             Card *card = [self.game cardAtIndex:(row * col)];
             [self layoutCard:card atIndex:(row * col)];
         }
 }
+*/
 
 -(void) setCardButtonStateForCardButton:(UIButton *)cardButton usingCard:(Card *)card {
     [cardButton setTitle:[self titleForCard:card] forState:UIControlStateNormal];
