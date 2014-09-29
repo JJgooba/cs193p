@@ -55,10 +55,12 @@
     int columnCount = 1;
     while (!self.resolved && !self.unresolvable) {
         double cellWidth = overallWidth / (double)columnCount;
+        NSLog(@"cellWidth = %.1f",cellWidth);
         if (cellWidth <= minCellWidth) {
             self.unresolvable = YES;
         } else {
             double cellHeight = cellWidth / aspectRatio;
+            NSLog(@"cellHeight = %.1f",cellHeight);
             if (cellHeight <= minCellHeight) {
                 self.unresolvable = YES;
             } else {
