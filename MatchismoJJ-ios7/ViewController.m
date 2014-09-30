@@ -40,6 +40,12 @@
     return _cardViews;
 }
 
+- (IBAction)cardTap:(UITapGestureRecognizer *)sender {
+    UIView *tappedView = [self.cardContainingView hitTest:[sender locationInView:self.cardContainingView] withEvent:NULL];
+    NSUInteger i = [self.cardViews indexOfObject:tappedView];
+    NSLog(@"you tapped the card at index %lu", i);
+}
+
 -(Grid *) grid
 {
     if (!_grid) {
@@ -191,7 +197,7 @@
     if (card) {
         NSUInteger row = (index  / self.grid.columnCount);
         NSUInteger col = index - (row * self.grid.columnCount);
-        NSLog(@"placing card #%d (%@) at row %lu col %lu", index, card.contents, (unsigned long)row, (unsigned long)col);
+        NSLog(@"placing card #%lu (%@) at row %lu col %lu", (unsigned long)index, card.contents, (unsigned long)row, (unsigned long)col);
         [self.cardViews addObject:[self cardViewForCard:card withCGRect:[self.grid frameOfCellAtRow:row inColumn:col]]];
         [self.cardContainingView addSubview:self.cardViews[index]];
     }
