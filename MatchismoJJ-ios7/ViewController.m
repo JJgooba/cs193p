@@ -44,6 +44,8 @@
     UIView *tappedView = [self.cardContainingView hitTest:[sender locationInView:self.cardContainingView] withEvent:NULL];
     NSUInteger i = [self.cardViews indexOfObject:tappedView];
     NSLog(@"you tapped the card at index %lu", i);
+    if (i < self.cardViews.count)
+        self.cardViews[i].isChosen = !self.cardViews.chosen;
 }
 
 -(Grid *) grid

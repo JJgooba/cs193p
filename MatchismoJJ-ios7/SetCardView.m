@@ -34,6 +34,15 @@
     [self setup];
 }
 
+-(void) setChosen:(BOOL)chosen
+{
+    _chosen = chosen;
+    if (_chosen == YES)
+        self.backgroundColor = [UIColor grayColor];
+    else
+        self.backgroundColor = [UIColor whiteColor];
+}
+
 #pragma mark - Set Card Properties
 
 -(void)setNumber:(NSNumber *)number

@@ -14,5 +14,6 @@
 @property (strong, nonatomic) NSString *symbol;
 @property (strong, nonatomic) NSString *shading;
 @property (strong, nonatomic) NSString *color;
+@property (nonatomic, getter = isChosen) BOOL chosen;
 
 @end
