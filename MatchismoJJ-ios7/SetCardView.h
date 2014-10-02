@@ -7,13 +7,13 @@
 //
 
 #import <UIKit/UIKit.h>
+#import "CardView.h"
 
-@interface SetCardView : UIView
+@interface SetCardView : CardView
 
 @property (strong, nonatomic) NSNumber *number;
 @property (strong, nonatomic) NSString *symbol;
 @property (strong, nonatomic) NSString *shading;
 @property (strong, nonatomic) NSString *color;
-@property (nonatomic, getter = isChosen) BOOL chosen;
 
 @end

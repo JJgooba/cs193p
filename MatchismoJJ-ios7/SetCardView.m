@@ -15,7 +15,7 @@
 - (void)setup
 {
     NSLog(@"blah");
-    self.backgroundColor = [UIColor whiteColor];
+    self.backgroundColor = self.chosen ? [UIColor lightGrayColor] : [UIColor whiteColor] ;
     self.opaque = NO;
     self.contentMode = UIViewContentModeRedraw; //invokes setNeedsDisplay when bounds change
 }
@@ -34,7 +34,7 @@
     [self setup];
 }
 
--(void) setChosen:(BOOL)chosen
+/*-(void) setChosen:(BOOL)chosen
 {
     _chosen = chosen;
     if (_chosen == YES)
@@ -42,6 +42,7 @@
     else
         self.backgroundColor = [UIColor whiteColor];
 }
+*/
 
 #pragma mark - Set Card Properties
 

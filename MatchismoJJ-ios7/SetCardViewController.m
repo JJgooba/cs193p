@@ -59,7 +59,7 @@ static const int FONT_SIZE = 12;
     cardView.symbol = setCard.symbol;
     cardView.shading = setCard.shading;
     cardView.color = setCard.color;
-    
+    cardView.chosen = setCard.chosen;
     return cardView;
 }
 

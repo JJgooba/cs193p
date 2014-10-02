@@ -12,6 +12,7 @@
 #import "Card.h"
 #import "GameInfo.h"
 #import "Grid.h"
+#import "CardView.h"
 
 
 @interface ViewController ()
@@ -44,8 +45,11 @@
     UIView *tappedView = [self.cardContainingView hitTest:[sender locationInView:self.cardContainingView] withEvent:NULL];
     NSUInteger i = [self.cardViews indexOfObject:tappedView];
     NSLog(@"you tapped the card at index %lu", i);
-    if (i < self.cardViews.count)
-        self.cardViews[i].isChosen = !self.cardViews.chosen;
+    if (i < self.cardViews.count) {
+        CardView *cardView = self.cardViews[i];
+        cardView.chosen = !cardView.isChosen;
+        [self updateUI];
+    }
 }
 
 -(Grid *) grid

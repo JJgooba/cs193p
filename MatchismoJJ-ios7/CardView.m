@@ -18,4 +18,9 @@
 }
 */
 
+-(void) setChosen:(BOOL)chosen
+{
+    _chosen = chosen;
+}
+
 @end
