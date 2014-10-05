@@ -186,8 +186,12 @@ static const double timeInterval = 0.3;
     for (int i = 0; i < (self.grid.rowCount * self.grid.columnCount); i++) {
         if ((i+1) <= self.numCardsInPlay) {
             Card *card = [self.game cardAtIndex:i];
-            if (self.newGameState || self.viewRotated) { //only place cards if new game or view rotated
-                [self placeCard:card atIndex:i];
+            if (self.newGameState) { //only place cards if new game or view rotated
+                [self placeCard:card atIndex:i withDelay:i];
+            }
+            else if (self.viewRotated)
+            {
+                [self moveCardToIndex:i];
             }
             else
             {
@@ -195,16 +199,6 @@ static const double timeInterval = 0.3;
                 cardView.chosen = card.isChosen;
             }
         }
-        
-        /*    for (UIButton *cardButton in self.cardButtons) {
-         int cardButtonIndex = (int)[self.cardButtons indexOfObject:cardButton];
-         Card *card = [self.game cardAtIndex:cardButtonIndex];
-         [self setCardButtonStateForCardButton:cardButton usingCard:card];
-         cardButton.enabled = !card.isMatched;
-         self.scoreLabel.text = [NSString stringWithFormat:@"Score: %ld",(long)self.game.score];
-         
-         }
-         */
     }
     self.newGameState = NO;
     self.viewRotated = NO;
@@ -218,8 +212,28 @@ static const double timeInterval = 0.3;
     return nil; //implement in subclass
 }
 
-// places card in the GUI at (row, col) as derived from index
+//moves an existing card to new location (which it uses grid to find)
+-(void) moveCardToIndex:(NSUInteger)index
+{
+    NSUInteger row = (index  / self.grid.columnCount);
+    NSUInteger col = index - (row * self.grid.columnCount);
+    CardView *cardView = self.cardViews[index];
+    [UIView animateWithDuration:(timeInterval * 0.3 * index)
+                          delay:timeInterval
+                        options:UIViewAnimationOptionCurveEaseInOut
+                     animations:^{
+                         cardView.frame = [self.grid frameOfCellAtRow:row inColumn:col];
+                     }
+                     completion:NULL];
+}
+
 -(void) placeCard:(Card *)card atIndex:(NSUInteger) index
+{
+    [self placeCard:card atIndex:index withDelay:0];
+}
+
+// places card in the GUI at (row, col) as derived from index
+-(void) placeCard:(Card *)card atIndex:(NSUInteger) index withDelay:(NSUInteger)delay
 {
     if (card) {
         NSUInteger row = (index  / self.grid.columnCount);
@@ -227,29 +241,27 @@ static const double timeInterval = 0.3;
         NSLog(@"placing card #%lu (%@) at row %lu col %lu", (unsigned long)index, card.contents, (unsigned long)row, (unsigned long)col);
         UIView *cardView = [self cardViewForCard:card withCGRect:[self.grid frameOfCellAtRow:row inColumn:col]];
         [self.cardViews addObject:cardView];
-//        [self.cardContainingView addSubview:self.cardViews[index]];
-        [self animateAddingCardView:cardView withDelay:timeInterval inRect:[self.grid frameOfCellAtRow:row inColumn:col] atIndex:index];
+        [self animateAddingCardView:cardView withDelay:(delay * timeInterval)/3.0 atIndex:index];
     }
 }
+-(void)animateAddingCardView:(UIView *)card atIndex:(NSUInteger)index
+{
+    [self animateAddingCardView:card withDelay:0 atIndex:index];
+}
 
--(void)animateAddingCardView:(UIView *)card withDelay:(NSTimeInterval)delay inRect:(CGRect)rect atIndex:(NSUInteger)index
+-(void)animateAddingCardView:(UIView *)card withDelay:(NSTimeInterval)delay atIndex:(NSUInteger)index
 {
     if (card) {
-//        NSUInteger row = (index  / self.grid.columnCount);
-//        NSUInteger col = index - (row * self.grid.columnCount);
-//        NSLog(@"animating card to #%lu (%@) at row %lu col %lu", (unsigned long)index, card.contents, (unsigned long)row, (unsigned long)col);
+        CGRect originalFrame = card.frame;
+        card.center = CGPointMake(self.cardContainingView.bounds.size.width * 3.0, self.cardContainingView.bounds.size.height * 3.0);
 
-        CGRect tempRect = CGRectMake(self.cardContainingView.bounds.size.width * 3,
-                                     self.cardContainingView.bounds.size.height * 2 ,
-                                     rect.size.width, rect.size.height);         // the view below will be off screen to animate moving in
-        CGRect originalRect = card.bounds;
-        card.bounds = tempRect;
+        NSLog(@"moving from (%.0f,%.0f)",card.frame.origin.x, card.frame.origin.y);
         [self.cardContainingView addSubview:card];  //add to main GUI (off screen)
-        [UIView animateWithDuration:1.0
+        [UIView animateWithDuration:timeInterval
                               delay:delay
                             options:UIViewAnimationOptionCurveEaseInOut
                          animations:^{
-                             card.bounds = originalRect; //animate move to original frame (i.e. - correct position)
+                             card.frame = originalFrame;
                              NSLog(@"now moving card to (%.0f,%.0f)", card.bounds.origin.x, card.bounds.origin.y);
                          }
                          completion:NULL];
@@ -342,7 +354,7 @@ static const double timeInterval = 0.3;
     NSLog(@"viewWillLayoutSubviews");
 //    NSLog(@"==== there are %d cardViews on the screen", self.cardViews.count);
     self.grid = nil;
-    [self removeAllCardsFromSuperView];
+//    [self removeAllCardsFromSuperView];
     self.viewRotated = YES;
     [self updateUI];
 }
