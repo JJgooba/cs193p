@@ -30,10 +30,11 @@
 @property (strong, nonatomic) Grid *grid;
 @property (nonatomic) CGFloat cardAspectRatio; // for input to Grid -- override in subclass
 @property (nonatomic) NSUInteger minNumCards; // for input to Grid -- override in subclass
-
 @end
 
 @implementation ViewController
+
+static const double timeInterval = 0.3;
 
 //array containing all of the card subviews
 -(NSMutableArray *) cardViews {
@@ -130,7 +131,7 @@
     [self removeAllCardsFromSuperView];
     self.newGameState = YES;
     self.viewRotated = NO;
-//    [self updateUI]; //new game will be created in updateUI through lazy instantiation
+    [self updateUI]; //new game will be created in updateUI through lazy instantiation
 }
 /*
 - (IBAction)historySliderChanged:(UISlider *)sender {
@@ -211,29 +212,53 @@
 
 }
 
+//creates a new SetCardView based on card and rect
 -(UIView *)cardViewForCard:(Card *)card withCGRect:(CGRect)rect
 {
     return nil; //implement in subclass
 }
 
--(void) placeCard:(Card *)card atIndex:(NSUInteger) index
 // places card in the GUI at (row, col) as derived from index
+-(void) placeCard:(Card *)card atIndex:(NSUInteger) index
 {
     if (card) {
         NSUInteger row = (index  / self.grid.columnCount);
         NSUInteger col = index - (row * self.grid.columnCount);
         NSLog(@"placing card #%lu (%@) at row %lu col %lu", (unsigned long)index, card.contents, (unsigned long)row, (unsigned long)col);
-        [self.cardViews addObject:[self cardViewForCard:card withCGRect:[self.grid frameOfCellAtRow:row inColumn:col]]];
-        [self.cardContainingView addSubview:self.cardViews[index]];
+        UIView *cardView = [self cardViewForCard:card withCGRect:[self.grid frameOfCellAtRow:row inColumn:col]];
+        [self.cardViews addObject:cardView];
+//        [self.cardContainingView addSubview:self.cardViews[index]];
+        [self animateAddingCardView:cardView withDelay:timeInterval inRect:[self.grid frameOfCellAtRow:row inColumn:col] atIndex:index];
+    }
+}
+
+-(void)animateAddingCardView:(UIView *)card withDelay:(NSTimeInterval)delay inRect:(CGRect)rect atIndex:(NSUInteger)index
+{
+    if (card) {
+//        NSUInteger row = (index  / self.grid.columnCount);
+//        NSUInteger col = index - (row * self.grid.columnCount);
+//        NSLog(@"animating card to #%lu (%@) at row %lu col %lu", (unsigned long)index, card.contents, (unsigned long)row, (unsigned long)col);
+
+        CGRect tempRect = CGRectMake(self.cardContainingView.bounds.size.width * 3,
+                                     self.cardContainingView.bounds.size.height * 2 ,
+                                     rect.size.width, rect.size.height);         // the view below will be off screen to animate moving in
+        CGRect originalRect = card.bounds;
+        card.bounds = tempRect;
+        [self.cardContainingView addSubview:card];  //add to main GUI (off screen)
+        [UIView animateWithDuration:1.0
+                              delay:delay
+                            options:UIViewAnimationOptionCurveEaseInOut
+                         animations:^{
+                             card.bounds = originalRect; //animate move to original frame (i.e. - correct position)
+                             NSLog(@"now moving card to (%.0f,%.0f)", card.bounds.origin.x, card.bounds.origin.y);
+                         }
+                         completion:NULL];
     }
 }
 
 -(void) removeAllCardsFromSuperView
 {
     [self animateRemovingCards:self.cardViews];
-//    for (CardView *cardView in self.cardViews) {
-//        [cardView removeFromSuperview];
-//    }
     self.cardViews = nil;
 }
 
@@ -241,21 +266,29 @@
 {
     if (cardsToRemove) {
         for (int i = 0; i < cardsToRemove.count; i++) {
-            NSTimeInterval del = ((i+1) * 0.3);
-            [UIView animateWithDuration:del
-                                  delay:del
-                                options:UIViewAnimationOptionCurveEaseInOut
-                             animations:^{
-                                 UIView *card = cardsToRemove[i];
-                                 card.center = CGPointMake(0, -100);
-                             }
-                             completion:^(BOOL finished) {
-                                 [cardsToRemove[i] performSelector:@selector(removeFromSuperview)];
-                             }];
+            NSTimeInterval del = ((i+1) * timeInterval);
+            [self animateRemovingCard:cardsToRemove[i] withDelay:(del/4)];
         }
     }
 }
 
+-(void)animateRemovingCard:(UIView *)card withDelay:(NSTimeInterval) delay
+{
+    [UIView animateWithDuration:timeInterval
+                          delay:delay
+                        options:UIViewAnimationOptionCurveEaseOut
+                     animations:^{
+                         card.center = CGPointMake(0, -100);
+                     }
+                     completion:^(BOOL finished) {
+                         [card performSelector:@selector(removeFromSuperview)];
+                     }];
+}
+
+-(void)animateRemovingCard:(UIView *)card
+{
+    [self animateRemovingCard:card withDelay:0];
+}
 
 -(void) setCardButtonStateForCardButton:(UIButton *)cardButton usingCard:(Card *)card {
     [cardButton setTitle:[self titleForCard:card] forState:UIControlStateNormal];
