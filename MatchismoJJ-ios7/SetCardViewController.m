@@ -16,12 +16,15 @@
 
 @implementation SetCardViewController
 
--(Deck *)createDeck {
-    return [[SetCardDeck alloc] init];
-}
+#pragma mark - Define CONSTs
 
 static const CGFloat cardsAspectRatio = 3.0/2.0;
 static const NSUInteger minimumNumCards = 12;
+//static const int FONT_SIZE = 12;
+
+-(Deck *)createDeck {
+    return [[SetCardDeck alloc] init];
+}
 
 -(CGFloat) cardAspectRatio
 {
@@ -33,14 +36,16 @@ static const NSUInteger minimumNumCards = 12;
     return minimumNumCards;
 }
 
-static const int FONT_SIZE = 12;
-
 -(NSInteger)numCardsInGame // returns number of cards to match in new game
 {
     return 3;  //overriding selector as set game always matches 3
 }
 
--(void) setCardButtonStateForCardButton:(UIButton *)cardButton usingCard:(Card *)card {
+-(NSUInteger)numCardsInPlay {
+    return 12;
+}
+
+/*-(void) setCardButtonStateForCardButton:(UIButton *)cardButton usingCard:(Card *)card {
     [cardButton setAttributedTitle:[self attributedStringFromSetCard:(SetCard *)card] forState:UIControlStateNormal];
     if (card.isMatched) {
         [cardButton setBackgroundColor:[[UIColor blackColor] colorWithAlphaComponent:0.2]];
@@ -49,6 +54,7 @@ static const int FONT_SIZE = 12;
     [cardButton setBackgroundColor:card.isChosen ? [UIColor lightGrayColor] : [UIColor whiteColor]];
     }
 }
+*/
 
 -(UIView *)cardViewForCard:(Card *)card withCGRect:(CGRect)rect //overriding from parent class
 {
@@ -63,11 +69,12 @@ static const int FONT_SIZE = 12;
     return cardView;
 }
 
-
+/*
 -(NSAttributedString *)attributedStringFromCard:(Card *)card
 {
     return [self attributedStringFromSetCard:(SetCard *)card];
 }
+
 
 -(NSAttributedString *)attributedStringFromSetCard:(SetCard *)card
 {
@@ -142,6 +149,6 @@ static const int FONT_SIZE = 12;
         return [[NSAttributedString alloc] initWithAttributedString:string];
     }   else return nil;
 }
-
+*/
 
 @end

@@ -22,6 +22,7 @@
 @property (weak, nonatomic) IBOutlet UISegmentedControl *numCardsSelector;
 @property (weak, nonatomic) IBOutlet UILabel *scoreLabel;
 @property (nonatomic) BOOL newGameState;
+@property (nonatomic) BOOL viewRotated;
 @property (weak, nonatomic) IBOutlet UILabel *moveLabel;
 @property (strong, nonatomic) NSMutableArray *moveHistory;
 @property (strong, nonatomic) GameInfo *gameInfo;
@@ -34,6 +35,7 @@
 
 @implementation ViewController
 
+//array containing all of the card subviews
 -(NSMutableArray *) cardViews {
     if (!_cardViews) {
         _cardViews = [[NSMutableArray alloc] init];
@@ -41,17 +43,7 @@
     return _cardViews;
 }
 
-- (IBAction)cardTap:(UITapGestureRecognizer *)sender {
-    UIView *tappedView = [self.cardContainingView hitTest:[sender locationInView:self.cardContainingView] withEvent:NULL];
-    NSUInteger i = [self.cardViews indexOfObject:tappedView];
-    NSLog(@"you tapped the card at index %lu", i);
-    if (i < self.cardViews.count) {
-        CardView *cardView = self.cardViews[i];
-        cardView.chosen = !cardView.isChosen;
-        [self updateUI];
-    }
-}
-
+// the professor's class which gives approximate dimensions to use for the card views
 -(Grid *) grid
 {
     if (!_grid) {
@@ -74,7 +66,6 @@
 
 -(CardMatchingGame *)game {  //lazy instantiation of game
     if (!_game) {
-//        _game = [[CardMatchingGame alloc ]initWithCardCount:[self.cardButtons count]
         _game = [[CardMatchingGame alloc ]initWithCardCount:self.minNumCards
                                                   usingDeck:[self createDeck] matchingNumCards:[self numCardsInGame]] ;
     }
@@ -94,6 +85,21 @@
 
 -(Deck *)createDeck {
     return nil;
+}
+
+//the action for when a card is tapped on the screen
+- (IBAction)cardTap:(UITapGestureRecognizer *)sender {
+    UIView *tappedView = [self.cardContainingView hitTest:[sender locationInView:self.cardContainingView] withEvent:NULL];
+    NSUInteger i = [self.cardViews indexOfObject:tappedView];
+    NSLog(@"you tapped the card at index %lu", i);
+    if (i < self.cardViews.count) { //if we tapped on a card
+        CardView *cardView = self.cardViews[i];
+        cardView.chosen = !cardView.isChosen;
+        [self.game chooseCardAtIndex:i];
+        [self.moveHistory addObject:[self attributedStringFromCardsArray:self.game.lastMatchedCards]];
+        [self writeGameInfo];  //update game score info in NSUserDefaults
+        [self updateUI];
+    }
 }
 
 - (IBAction)touchCardButton:(UIButton *)sender {
@@ -121,8 +127,10 @@
     self.game = nil;
     self.gameInfo = nil;
     self.moveHistory = nil;
+    [self removeAllCardsFromSuperView];
     self.newGameState = YES;
-    [self updateUI]; //new game will be created in updateUI through lazy instantiation
+    self.viewRotated = NO;
+//    [self updateUI]; //new game will be created in updateUI through lazy instantiation
 }
 /*
 - (IBAction)historySliderChanged:(UISlider *)sender {
@@ -169,25 +177,36 @@
 -(void)updateUI  // updates the GUI
 {
     self.numCardsSelector.enabled = self.newGameState;
-    self.newGameState = NO;
     [self updateMoveLabelText];
     self.moveLabel.alpha = 1.0;
     
     NSLog(@"game is %@", self.game == nil ? @"nil" : @"not nil");
     NSLog(@"num rows = %lu, num cols = %lu",self.grid.rowCount, (unsigned long)self.grid.columnCount);
     for (int i = 0; i < (self.grid.rowCount * self.grid.columnCount); i++) {
-        Card *card = [self.game cardAtIndex:i];
-        [self placeCard:card atIndex:i];
+        if ((i+1) <= self.numCardsInPlay) {
+            Card *card = [self.game cardAtIndex:i];
+            if (self.newGameState || self.viewRotated) { //only place cards if new game or view rotated
+                [self placeCard:card atIndex:i];
+            }
+            else
+            {
+                CardView *cardView = self.cardViews[i];
+                cardView.chosen = card.isChosen;
+            }
+        }
+        
+        /*    for (UIButton *cardButton in self.cardButtons) {
+         int cardButtonIndex = (int)[self.cardButtons indexOfObject:cardButton];
+         Card *card = [self.game cardAtIndex:cardButtonIndex];
+         [self setCardButtonStateForCardButton:cardButton usingCard:card];
+         cardButton.enabled = !card.isMatched;
+         self.scoreLabel.text = [NSString stringWithFormat:@"Score: %ld",(long)self.game.score];
+         
+         }
+         */
     }
-/*    for (UIButton *cardButton in self.cardButtons) {
-        int cardButtonIndex = (int)[self.cardButtons indexOfObject:cardButton];
-        Card *card = [self.game cardAtIndex:cardButtonIndex];
-        [self setCardButtonStateForCardButton:cardButton usingCard:card];
-        cardButton.enabled = !card.isMatched;
-        self.scoreLabel.text = [NSString stringWithFormat:@"Score: %ld",(long)self.game.score];
- 
-    }
- */
+    self.newGameState = NO;
+    self.viewRotated = NO;
     self.scoreLabel.text = [NSString stringWithFormat:@"Score: %ld",(long)self.game.score];
 
 }
@@ -209,14 +228,34 @@
     }
 }
 
-/* -(void) layoutAllCards {
-    for (int row = 1; row < self.grid.rowCount; row++)
-        for (int col = 1; col < self.grid.columnCount; col++){
-            Card *card = [self.game cardAtIndex:(row * col)];
-            [self layoutCard:card atIndex:(row * col)];
-        }
+-(void) removeAllCardsFromSuperView
+{
+    [self animateRemovingCards:self.cardViews];
+//    for (CardView *cardView in self.cardViews) {
+//        [cardView removeFromSuperview];
+//    }
+    self.cardViews = nil;
 }
-*/
+
+- (void)animateRemovingCards:(NSArray *)cardsToRemove
+{
+    if (cardsToRemove) {
+        for (int i = 0; i < cardsToRemove.count; i++) {
+            NSTimeInterval del = ((i+1) * 0.3);
+            [UIView animateWithDuration:del
+                                  delay:del
+                                options:UIViewAnimationOptionCurveEaseInOut
+                             animations:^{
+                                 UIView *card = cardsToRemove[i];
+                                 card.center = CGPointMake(0, -100);
+                             }
+                             completion:^(BOOL finished) {
+                                 [cardsToRemove[i] performSelector:@selector(removeFromSuperview)];
+                             }];
+        }
+    }
+}
+
 
 -(void) setCardButtonStateForCardButton:(UIButton *)cardButton usingCard:(Card *)card {
     [cardButton setTitle:[self titleForCard:card] forState:UIControlStateNormal];
@@ -264,6 +303,15 @@
         if ([segue.destinationViewController isKindOfClass:[HighScoreViewController class]]) {
         
     }
+}
+
+-(void)didRotateFromInterfaceOrientation:(UIInterfaceOrientation)fromInterfaceOrientation {
+    NSLog(@"viewWillLayoutSubviews");
+//    NSLog(@"==== there are %d cardViews on the screen", self.cardViews.count);
+    self.grid = nil;
+    [self removeAllCardsFromSuperView];
+    self.viewRotated = YES;
+    [self updateUI];
 }
 
 @end

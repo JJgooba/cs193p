@@ -464,7 +464,7 @@
                                 <fontDescription key="fontDescription" type="system" pointSize="17"/>
                                 <nil key="highlightedColor"/>
                             </label>
-                            <view contentMode="scaleToFill" misplaced="YES" translatesAutoresizingMaskIntoConstraints="NO" id="bgy-Mf-2pb">
+                            <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="bgy-Mf-2pb">
                                 <rect key="frame" x="20" y="86" width="280" height="254"/>
                                 <color key="backgroundColor" red="0.96862751245498657" green="0.90588241815567017" blue="0.97254908084869385" alpha="1" colorSpace="deviceRGB"/>
                                 <gestureRecognizers/>
@@ -478,16 +478,16 @@
                             <constraint firstItem="zmW-KT-h6j" firstAttribute="baseline" secondItem="V3q-mY-6xI" secondAttribute="baseline" id="7Bf-ez-oUP"/>
                             <constraint firstItem="zmW-KT-h6j" firstAttribute="top" secondItem="V3q-mY-6xI" secondAttribute="top" id="7MR-bB-7n4"/>
                             <constraint firstItem="zmW-KT-h6j" firstAttribute="leading" secondItem="Ske-KK-bdq" secondAttribute="leading" id="7pI-BU-HKG"/>
-                            <constraint firstItem="bgy-Mf-2pb" firstAttribute="leading" secondItem="zmW-KT-h6j" secondAttribute="leading" id="DsA-3E-IwT"/>
+                            <constraint firstItem="bgy-Mf-2pb" firstAttribute="trailing" secondItem="zmW-KT-h6j" secondAttribute="trailing" id="Aaw-zd-LxY"/>
                             <constraint firstAttribute="trailing" secondItem="zmW-KT-h6j" secondAttribute="trailing" constant="20" symbolic="YES" id="EGS-l7-MRL"/>
                             <constraint firstItem="Ske-KK-bdq" firstAttribute="top" secondItem="zmW-KT-h6j" secondAttribute="bottom" constant="12" id="HoZ-gq-vnF"/>
+                            <constraint firstItem="zmW-KT-h6j" firstAttribute="top" secondItem="bgy-Mf-2pb" secondAttribute="bottom" constant="8" symbolic="YES" id="Im0-ew-eg7"/>
                             <constraint firstAttribute="bottom" secondItem="Ske-KK-bdq" secondAttribute="bottom" constant="20" symbolic="YES" id="JU5-oN-vNj"/>
-                            <constraint firstItem="zmW-KT-h6j" firstAttribute="top" secondItem="bgy-Mf-2pb" secondAttribute="bottom" constant="8" symbolic="YES" id="JfN-yL-gCz"/>
                             <constraint firstAttribute="trailing" secondItem="V3q-mY-6xI" secondAttribute="trailing" constant="25" id="QE1-Cz-DU0"/>
                             <constraint firstItem="zmW-KT-h6j" firstAttribute="leading" secondItem="Rjv-Kn-5PU" secondAttribute="leading" constant="20" symbolic="YES" id="atz-4H-tt8"/>
-                            <constraint firstItem="bgy-Mf-2pb" firstAttribute="top" secondItem="Q4Y-Tx-a2K" secondAttribute="bottom" id="f87-u7-6Fm"/>
+                            <constraint firstItem="bgy-Mf-2pb" firstAttribute="top" secondItem="Q4Y-Tx-a2K" secondAttribute="bottom" constant="22" id="gWq-nQ-ktE"/>
+                            <constraint firstItem="bgy-Mf-2pb" firstAttribute="leading" secondItem="zmW-KT-h6j" secondAttribute="leading" id="kKT-sm-Ds7"/>
                             <constraint firstItem="nzv-ui-39B" firstAttribute="top" secondItem="V3q-mY-6xI" secondAttribute="bottom" constant="62" id="mmm-rP-mRn"/>
-                            <constraint firstItem="bgy-Mf-2pb" firstAttribute="trailing" secondItem="zmW-KT-h6j" secondAttribute="trailing" id="sk5-Wt-GUw"/>
                         </constraints>
                     </view>
                     <navigationItem key="navigationItem" title="Set!" id="apb-K7-dL8">

@@ -13,5 +13,6 @@
 
 @interface ViewController : UIViewController
 @property (strong, nonatomic) CardMatchingGame *game;
+@property (readonly) NSUInteger numCardsInPlay;
 -(NSAttributedString *)attributedMoveHistory;
 @end

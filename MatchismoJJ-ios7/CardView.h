@@ -13,4 +13,5 @@
 @interface CardView : UIView
 @property (nonatomic, getter = isMatched) BOOL matched;
 @property (nonatomic, getter = isChosen) BOOL chosen;
+//-(void)setChosen:(BOOL)chosen;
 @end
