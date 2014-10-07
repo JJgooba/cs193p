@@ -207,7 +207,7 @@
             endingColumnNumber = "9223372036854775807"
             startingLineNumber = "269"
             endingLineNumber = "269"
-            landmarkName = "-animateRemovingCards:"
+            landmarkName = "-animateAddingCardView:withDelay:atIndex:"
             landmarkType = "5">
          </BreakpointContent>
       </BreakpointProxy>

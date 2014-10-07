@@ -193,7 +193,11 @@ static const double timeInterval = 0.3;
             {
                 [self moveCardToIndex:i];
             }
+            else if (card.isMatched) {
+                [self animateRemovingCard:<#(UIView *)#> withDelay:<#(NSTimeInterval)#>]
+            }
             else
+                    
             {
                 CardView *cardView = self.cardViews[i];
                 cardView.chosen = card.isChosen;
@@ -218,8 +222,8 @@ static const double timeInterval = 0.3;
     NSUInteger row = (index  / self.grid.columnCount);
     NSUInteger col = index - (row * self.grid.columnCount);
     CardView *cardView = self.cardViews[index];
-    [UIView animateWithDuration:(timeInterval * 0.3 * index)
-                          delay:timeInterval
+    [UIView animateWithDuration:0
+                          delay:0
                         options:UIViewAnimationOptionCurveEaseInOut
                      animations:^{
                          cardView.frame = [self.grid frameOfCellAtRow:row inColumn:col];
@@ -352,9 +356,7 @@ static const double timeInterval = 0.3;
 
 -(void)didRotateFromInterfaceOrientation:(UIInterfaceOrientation)fromInterfaceOrientation {
     NSLog(@"viewWillLayoutSubviews");
-//    NSLog(@"==== there are %d cardViews on the screen", self.cardViews.count);
     self.grid = nil;
-//    [self removeAllCardsFromSuperView];
     self.viewRotated = YES;
     [self updateUI];
 }
