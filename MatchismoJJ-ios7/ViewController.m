@@ -24,6 +24,7 @@
 @property (weak, nonatomic) IBOutlet UILabel *scoreLabel;
 @property (nonatomic) BOOL newGameState;
 @property (nonatomic) BOOL refreshView;
+@property (nonatomic) BOOL matchedSomeCards;
 @property (weak, nonatomic) IBOutlet UILabel *moveLabel;
 @property (strong, nonatomic) NSMutableArray *moveHistory;
 @property (strong, nonatomic) GameInfo *gameInfo;
@@ -62,11 +63,11 @@ static const double timeInterval = 0.3;
     if (!_grid) {
         _grid = [[Grid alloc] init];
         _grid.size = self.cardContainingView.bounds.size;
-        NSLog(@"  *** grid size is %.0f x %.0f",_grid.size.width, _grid.size.height);
+//        NSLog(@"  *** grid size is %.0f x %.0f",_grid.size.width, _grid.size.height);
         _grid.cellAspectRatio = self.cardAspectRatio;
         _grid.minimumNumberOfCells = self.numCardsInPlay;
     }
-    NSLog(@"  *** %lu x %lu grid size is %.0f x %.0f and superview is %.0f x %.0f",_grid.rowCount, _grid.columnCount, _grid.size.width, _grid.size.height, self.cardContainingView.bounds.size.width, self.cardContainingView.bounds.size.height);
+//    NSLog(@"  *** %lu x %lu grid size is %.0f x %.0f and superview is %.0f x %.0f",_grid.rowCount, _grid.columnCount, _grid.size.width, _grid.size.height, self.cardContainingView.bounds.size.width, self.cardContainingView.bounds.size.height);
     return _grid;
 }
 
@@ -202,6 +203,7 @@ static const double timeInterval = 0.3;
 {
     self.moveLabel.attributedText = [self attributedStringFromCardsArray:self.game.lastMatchedCards];
 }
+
 -(void)updateUI  // updates the GUI
 {
     self.numCardsSelector.enabled = self.newGameState;
@@ -215,25 +217,46 @@ static const double timeInterval = 0.3;
     NSLog(@"num rows = %lu, num cols = %lu",self.grid.rowCount, (unsigned long)self.grid.columnCount);
     for (int i = 0; i < self.numCardsInPlay; i++) {
         Card *card = [self.game cardAtIndex:i];
-        if (self.newGameState || (i+1 > self.cardsInPlay.count)) //only place cards if new game or view rotated
+        if (self.newGameState ) //only place cards if new game
         {
             [self placeCard:card atIndex:i withDelay:i];
             NSLog(@"&&& placing new card at index %i", i);
         }
-        if (self.refreshView)
-        {
-            [self moveCardToIndex:i];
-        }
-        else if (card.isMatched) {
+        if (card.isMatched) {
             [self animateRemovingCard:self.cardViews[i] withDelay:0];
             [self.cardsInPlay removeObjectAtIndex:i];
+            NSLog(@"removed card at index %i, %lu (%lu) cards remain in play", i, self.cardsInPlay.count, self.numCardsInPlay);
+            self.refreshView = YES; // need to refresh view to remove card gaps
+            self.matchedSomeCards = YES;
+            i--; // decrement i so we don't skip the next card which just slid into this position
         }
-        else
-        {
-            CardView *cardView = self.cardViews[i];
-            cardView.chosen = card.isChosen;
+        CardView *cardView = self.cardViews[i];
+        cardView.chosen = card.isChosen;
+    }
+    
+    if (self.refreshView) {
+        if (self.numCardsInPlay == self.cardsInPlay.count) { //the display rotated
+            for (int i = 0; i < self.numCardsInPlay; i++)
+                [self moveCardToIndex:i];
+        }
+        else if (self.matchedSomeCards) {
+            self.matchedSomeCards = NO;
+            self.grid.minimumNumberOfCells = self.cardsInPlay.count;
+            for (int i = 0; i < self.cardViews.count; i++)
+                [self moveCardToIndex:i];
+            }
+        else if (self.numCardsInPlay > self.cardsInPlay.count){         // some cards were added
+            self.grid.minimumNumberOfCells = self.cardsInPlay.count;    // resize the grid
+            for (int i = self.cardsInPlay.count; i < self.numCardsInPlay; i++) {
+                Card *card = [self.game cardAtIndex:i];
+                [self placeCard:card atIndex:i];
+            }
+        }
+        else if (self.numCardsInPlay < self.cardsInPlay.count) { // some cards were removed
+            
         }
     }
+    self.numCardsInPlay = self.cardsInPlay.count;
     self.newGameState = NO;
     self.refreshView = NO;
     self.scoreLabel.text = [NSString stringWithFormat:@"Score: %ld",(long)self.game.score];
@@ -247,19 +270,6 @@ static const double timeInterval = 0.3;
 }
 
 //moves an existing card to new location (which it uses grid to find)
--(void) moveCardToIndex:(NSUInteger)index
-{
-    NSUInteger row = (index  / self.grid.columnCount);
-    NSUInteger col = index - (row * self.grid.columnCount);
-    CardView *cardView = self.cardViews[index];
-    [UIView animateWithDuration:timeInterval
-                          delay:0
-                        options:UIViewAnimationOptionCurveEaseInOut
-                     animations:^{
-                         cardView.frame = [self.grid frameOfCellAtRow:row inColumn:col];
-                     }
-                     completion:NULL];
-}
 
 -(void) placeCard:(Card *)card atIndex:(NSUInteger) index
 {
@@ -303,6 +313,26 @@ static const double timeInterval = 0.3;
     }
 }
 
+-(void) moveCardToIndex:(NSUInteger)index
+{
+    
+    NSUInteger row = (index  / self.grid.columnCount);
+    NSUInteger col = index - (row * self.grid.columnCount);
+    if (index <= self.cardViews.count) {
+        CardView *cardView = self.cardViews[index];
+        if (cardView) {
+            [UIView animateWithDuration:timeInterval
+                                  delay:0
+                                options:UIViewAnimationOptionCurveEaseInOut
+                             animations:^{
+                                 cardView.frame = [self.grid frameOfCellAtRow:row inColumn:col];
+                             }
+                             completion:NULL];
+        }
+    }
+}
+
+
 -(void) removeAllCardsFromSuperView
 {
     [self animateRemovingCards:self.cardViews];
@@ -321,15 +351,19 @@ static const double timeInterval = 0.3;
 
 -(void)animateRemovingCard:(UIView *)card withDelay:(NSTimeInterval) delay
 {
-    [UIView animateWithDuration:timeInterval
-                          delay:delay
-                        options:UIViewAnimationOptionCurveEaseOut
-                     animations:^{
-                         card.center = CGPointMake(0, -100);
-                     }
-                     completion:^(BOOL finished) {
-                         [card performSelector:@selector(removeFromSuperview)];
-                     }];
+    if (card) {
+        [UIView animateWithDuration:timeInterval
+                              delay:delay
+                            options:UIViewAnimationOptionCurveEaseOut
+                         animations:^{
+                             card.center = CGPointMake(0, -100);
+                         }
+                         completion:^(BOOL finished) {
+                             [card performSelector:@selector(removeFromSuperview)];
+                             NSLog(@"animated removing a card!");
+                         }];
+        [self.cardViews removeObjectAtIndex:[self.cardViews indexOfObject:card]];
+    }
 }
 
 -(void)animateRemovingCard:(UIView *)card
@@ -362,6 +396,7 @@ static const double timeInterval = 0.3;
 -(void) setup
 {
     self.newGameState = YES;
+    self.matchedSomeCards = NO;
     self.numCardsInPlay = self.minNumCards;
     [self updateUI];
 }

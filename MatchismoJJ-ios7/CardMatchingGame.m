@@ -89,7 +89,6 @@ static const int COST_TO_CHOOSE = 1;
             self.fullSet = YES;
             int matchScore = [card match:self.lastMatchedCards];  //get score for any matches
             if (matchScore > 0) {
-                NSLog(@"matchScore = %d", matchScore);
                 self.score += matchScore * MATCH_BONUS;
                 card.matched = YES;
                 for (Card *oCard in self.lastMatchedCards) {
