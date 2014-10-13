@@ -31,4 +31,9 @@
     }
     return self;
 }
+
++(NSUInteger)fullDeckCount
+{
+    return 81;
+}
 @end

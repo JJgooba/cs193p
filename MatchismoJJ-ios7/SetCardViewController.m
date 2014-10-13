@@ -40,10 +40,11 @@ static const NSUInteger minimumNumCards = 12;
 {
     return 3;  //overriding selector as set game always matches 3
 }
-
--(NSUInteger)numCardsInPlay {
-    return 12;
+-(NSUInteger)numCardsinDeck
+{
+    return 81;
 }
+
 
 /*-(void) setCardButtonStateForCardButton:(UIButton *)cardButton usingCard:(Card *)card {
     [cardButton setAttributedTitle:[self attributedStringFromSetCard:(SetCard *)card] forState:UIControlStateNormal];
@@ -56,9 +57,10 @@ static const NSUInteger minimumNumCards = 12;
 }
 */
 
+// returns a new SetCardView based on card and rect
+
 -(UIView *)cardViewForCard:(Card *)card withCGRect:(CGRect)rect //overriding from parent class
 {
-//creates a new SetCardView based on card and rect 
     SetCardView *cardView = [[SetCardView alloc] initWithFrame:rect];
     NSLog(@"the rect origin is (%f, %f) and size is %f x %f", rect.origin.x, rect.origin.y, rect.size.width, rect.size.height);
     SetCard * setCard = (SetCard *)card;

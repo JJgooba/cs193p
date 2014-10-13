@@ -25,4 +25,8 @@
     return self;
 }
 
++(NSUInteger)fullDeckCount
+{
+    return 52;
+}
 @end

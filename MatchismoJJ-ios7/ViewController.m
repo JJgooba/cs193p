@@ -19,10 +19,11 @@
 @property (nonatomic) int flipCount;
 @property (strong, nonatomic) IBOutletCollection(UIButton) NSArray *cardButtons;
 @property (strong, nonatomic) NSMutableArray *cardViews;
+@property (strong, nonatomic) NSMutableArray *cardsInPlay;
 @property (weak, nonatomic) IBOutlet UISegmentedControl *numCardsSelector;
 @property (weak, nonatomic) IBOutlet UILabel *scoreLabel;
 @property (nonatomic) BOOL newGameState;
-@property (nonatomic) BOOL viewRotated;
+@property (nonatomic) BOOL refreshView;
 @property (weak, nonatomic) IBOutlet UILabel *moveLabel;
 @property (strong, nonatomic) NSMutableArray *moveHistory;
 @property (strong, nonatomic) GameInfo *gameInfo;
@@ -44,16 +45,28 @@ static const double timeInterval = 0.3;
     return _cardViews;
 }
 
+// array containing all cards currently in play (not matched)
+-(NSMutableArray *)cardsInPlay
+{
+    if (!_cardsInPlay) {
+        _cardsInPlay = [[NSMutableArray alloc] init];
+    }
+    return _cardsInPlay;
+}
+
+//this should be overridden
+
 // the professor's class which gives approximate dimensions to use for the card views
 -(Grid *) grid
 {
     if (!_grid) {
         _grid = [[Grid alloc] init];
         _grid.size = self.cardContainingView.bounds.size;
-        NSLog(@"grid size is %.0f x %.0f",_grid.size.width, _grid.size.height);
+        NSLog(@"  *** grid size is %.0f x %.0f",_grid.size.width, _grid.size.height);
         _grid.cellAspectRatio = self.cardAspectRatio;
-        _grid.minimumNumberOfCells = self.minNumCards;
+        _grid.minimumNumberOfCells = self.numCardsInPlay;
     }
+    NSLog(@"  *** %lu x %lu grid size is %.0f x %.0f and superview is %.0f x %.0f",_grid.rowCount, _grid.columnCount, _grid.size.width, _grid.size.height, self.cardContainingView.bounds.size.width, self.cardContainingView.bounds.size.height);
     return _grid;
 }
 
@@ -65,9 +78,16 @@ static const double timeInterval = 0.3;
     return _moveHistory;
 }
 
+// to be overridden in subclass
+-(NSUInteger)numCardsinDeck
+{
+    return 6; //bogus number to make sure it's being overridden in subclass
+}
+
+
 -(CardMatchingGame *)game {  //lazy instantiation of game
     if (!_game) {
-        _game = [[CardMatchingGame alloc ]initWithCardCount:self.minNumCards
+        _game = [[CardMatchingGame alloc ]initWithCardCount:[self numCardsinDeck]
                                                   usingDeck:[self createDeck] matchingNumCards:[self numCardsInGame]] ;
     }
     return _game;
@@ -102,6 +122,12 @@ static const double timeInterval = 0.3;
         [self updateUI];
     }
 }
+- (IBAction)threeMoreCards:(UIButton *)sender {
+    self.numCardsInPlay = self.numCardsInPlay + 3;
+    if (self.numCardsInPlay > (self.grid.rowCount * self.grid.columnCount))
+        self.refreshView = YES;
+    [self updateUI];
+}
 
 - (IBAction)touchCardButton:(UIButton *)sender {
     int chosenButtonIndex = (int)[self.cardButtons indexOfObject:sender];
@@ -130,7 +156,8 @@ static const double timeInterval = 0.3;
     self.moveHistory = nil;
     [self removeAllCardsFromSuperView];
     self.newGameState = YES;
-    self.viewRotated = NO;
+    self.refreshView = NO;
+    [self setup];
     [self updateUI]; //new game will be created in updateUI through lazy instantiation
 }
 /*
@@ -180,37 +207,40 @@ static const double timeInterval = 0.3;
     self.numCardsSelector.enabled = self.newGameState;
     [self updateMoveLabelText];
     self.moveLabel.alpha = 1.0;
-    
-    NSLog(@"game is %@", self.game == nil ? @"nil" : @"not nil");
+    if (self.numCardsInPlay > self.grid.minimumNumberOfCells)  { // if we just added cards then we need to make sure the grid is large enough
+        self.grid.minimumNumberOfCells = self.numCardsInPlay;
+        self.refreshView = YES;
+    }
+//    NSLog(@"game is %@", self.game == nil ? @"nil" : @"not nil");
     NSLog(@"num rows = %lu, num cols = %lu",self.grid.rowCount, (unsigned long)self.grid.columnCount);
-    for (int i = 0; i < (self.grid.rowCount * self.grid.columnCount); i++) {
-        if ((i+1) <= self.numCardsInPlay) {
-            Card *card = [self.game cardAtIndex:i];
-            if (self.newGameState) { //only place cards if new game or view rotated
-                [self placeCard:card atIndex:i withDelay:i];
-            }
-            else if (self.viewRotated)
-            {
-                [self moveCardToIndex:i];
-            }
-            else if (card.isMatched) {
-                [self animateRemovingCard:<#(UIView *)#> withDelay:<#(NSTimeInterval)#>]
-            }
-            else
-                    
-            {
-                CardView *cardView = self.cardViews[i];
-                cardView.chosen = card.isChosen;
-            }
+    for (int i = 0; i < self.numCardsInPlay; i++) {
+        Card *card = [self.game cardAtIndex:i];
+        if (self.newGameState || (i+1 > self.cardsInPlay.count)) //only place cards if new game or view rotated
+        {
+            [self placeCard:card atIndex:i withDelay:i];
+            NSLog(@"&&& placing new card at index %i", i);
+        }
+        if (self.refreshView)
+        {
+            [self moveCardToIndex:i];
+        }
+        else if (card.isMatched) {
+            [self animateRemovingCard:self.cardViews[i] withDelay:0];
+            [self.cardsInPlay removeObjectAtIndex:i];
+        }
+        else
+        {
+            CardView *cardView = self.cardViews[i];
+            cardView.chosen = card.isChosen;
         }
     }
     self.newGameState = NO;
-    self.viewRotated = NO;
+    self.refreshView = NO;
     self.scoreLabel.text = [NSString stringWithFormat:@"Score: %ld",(long)self.game.score];
 
 }
 
-//creates a new SetCardView based on card and rect
+// returns a new SetCardView based on card and rect
 -(UIView *)cardViewForCard:(Card *)card withCGRect:(CGRect)rect
 {
     return nil; //implement in subclass
@@ -222,7 +252,7 @@ static const double timeInterval = 0.3;
     NSUInteger row = (index  / self.grid.columnCount);
     NSUInteger col = index - (row * self.grid.columnCount);
     CardView *cardView = self.cardViews[index];
-    [UIView animateWithDuration:0
+    [UIView animateWithDuration:timeInterval
                           delay:0
                         options:UIViewAnimationOptionCurveEaseInOut
                      animations:^{
@@ -245,6 +275,7 @@ static const double timeInterval = 0.3;
         NSLog(@"placing card #%lu (%@) at row %lu col %lu", (unsigned long)index, card.contents, (unsigned long)row, (unsigned long)col);
         UIView *cardView = [self cardViewForCard:card withCGRect:[self.grid frameOfCellAtRow:row inColumn:col]];
         [self.cardViews addObject:cardView];
+        [self.cardsInPlay addObject:card];
         [self animateAddingCardView:cardView withDelay:(delay * timeInterval)/3.0 atIndex:index];
     }
 }
@@ -266,7 +297,7 @@ static const double timeInterval = 0.3;
                             options:UIViewAnimationOptionCurveEaseInOut
                          animations:^{
                              card.frame = originalFrame;
-                             NSLog(@"now moving card to (%.0f,%.0f)", card.bounds.origin.x, card.bounds.origin.y);
+                             NSLog(@"now moving card to (%.0f,%.0f) in %lux%lu grid", card.frame.origin.x, card.frame.origin.y, self.grid.rowCount, self.grid.columnCount);
                          }
                          completion:NULL];
     }
@@ -324,10 +355,15 @@ static const double timeInterval = 0.3;
 - (void)viewDidLoad
 {
     [super viewDidLoad];
-    self.newGameState = YES;
-    [self updateUI];
-
+    [self setup];
 	// Do any additional setup after loading the view.
+}
+
+-(void) setup
+{
+    self.newGameState = YES;
+    self.numCardsInPlay = self.minNumCards;
+    [self updateUI];
 }
 
 -(NSAttributedString *)attributedMoveHistory
@@ -357,7 +393,7 @@ static const double timeInterval = 0.3;
 -(void)didRotateFromInterfaceOrientation:(UIInterfaceOrientation)fromInterfaceOrientation {
     NSLog(@"viewWillLayoutSubviews");
     self.grid = nil;
-    self.viewRotated = YES;
+    self.refreshView = YES;
     [self updateUI];
 }
 

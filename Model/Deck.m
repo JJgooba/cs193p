@@ -46,4 +46,9 @@
     }
     return randomCard;
 }
+
++(NSUInteger) fullDeckCount
+{
+    return 0;
+}
 @end
