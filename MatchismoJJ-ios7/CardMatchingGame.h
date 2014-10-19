@@ -15,7 +15,9 @@
 -(instancetype) initWithCardCount:(NSUInteger)count
                         usingDeck:(Deck *)deck matchingNumCards:(NSInteger)numCards;
 -(void)chooseCardAtIndex:(NSUInteger)index;
+-(void)removeCardAtIndex:(NSUInteger)index;  // for removing a card after it is matched
 -(Card *)cardAtIndex:(NSUInteger)index;
+-(NSUInteger)numCardsRemainingInDeck;
 -(BOOL) allCardsSelected;
 @property (nonatomic) NSInteger numCardsToMatch;
 @property (nonatomic, readonly) NSInteger score;

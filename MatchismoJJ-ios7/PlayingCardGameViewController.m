@@ -8,6 +8,7 @@
 
 #import "PlayingCardGameViewController.h"
 #import "PlayingCardDeck.h"
+#import "PlayingCardView.h"
 
 @interface PlayingCardGameViewController ()
 
@@ -19,7 +20,26 @@
     return [[PlayingCardDeck alloc] init];
 }
 
-static const CGFloat cardsAspectRatio = 2.0/3.5;
+static const CGFloat cardsAspectRatio = 2.0/3.0;
 static const NSUInteger minimumNumCards = 6;
 
+-(CGFloat) cardAspectRatio
+{
+    return cardsAspectRatio;
+}
+
+-(NSUInteger) minNumCards
+{
+    return minimumNumCards;
+}
+
+-(UIView *)cardViewForCard:(Card *)card withCGRect:(CGRect)rect //overriding from parent class
+{
+    PlayingCardView *playingCardView = [[PlayingCardView alloc] initWithFrame:rect];
+    PlayingCard *playingCard = (PlayingCard *)card;
+    playingCardView.rank = playingCard.rank;
+    playingCardView.suit = playingCard.suit;
+    playingCardView.faceUp = playingCard.isChosen;
+    return playingCardView;
+}
 @end

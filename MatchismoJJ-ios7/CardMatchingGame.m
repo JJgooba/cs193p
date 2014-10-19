@@ -110,4 +110,15 @@ static const int COST_TO_CHOOSE = 1;
     self.score -= COST_TO_CHOOSE;
     self.lastScore = self.score - oldScore;
 }
+
+-(void) removeCardAtIndex:(NSUInteger)index
+{
+    if (index < self.cards.count) {
+        [self.cards removeObjectAtIndex:index];
+    }
+}
+-(NSUInteger)numCardsRemainingInDeck
+{
+    return self.cards.count;
+}
 @end

@@ -46,6 +46,10 @@
     }
     return randomCard;
 }
+-(NSUInteger)numCardsRemainingInDeck
+{
+    return self.cards.count;
+}
 
 +(NSUInteger) fullDeckCount
 {

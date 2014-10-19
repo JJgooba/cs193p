@@ -13,6 +13,7 @@
 #import "GameInfo.h"
 #import "Grid.h"
 #import "CardView.h"
+#import "PlayingCardView.h"
 
 
 @interface ViewController ()
@@ -114,10 +115,15 @@ static const double timeInterval = 0.3;
 - (IBAction)cardTap:(UITapGestureRecognizer *)sender {
     UIView *tappedView = [self.cardContainingView hitTest:[sender locationInView:self.cardContainingView] withEvent:NULL];
     NSUInteger i = [self.cardViews indexOfObject:tappedView];
-//    NSLog(@"you tapped the card at index %lu", i);
+    NSLog(@"you tapped the card at index %lu", i);
     if (i < self.cardViews.count) { //if we tapped on a card
         CardView *cardView = self.cardViews[i];
         cardView.chosen = !cardView.isChosen;
+        if ([cardView isKindOfClass:[PlayingCardView class]]) {
+            PlayingCardView *pcView = (PlayingCardView *)cardView;
+            pcView.faceUp = !pcView.faceUp;
+        }
+            
         [self.game chooseCardAtIndex:i];
         [self.moveHistory addObject:[self attributedStringFromCardsArray:self.game.lastMatchedCards]];
         [self writeGameInfo];  //update game score info in NSUserDefaults
@@ -196,21 +202,33 @@ static const double timeInterval = 0.3;
 
 -(void)updateUI  // updates the GUI
 {
-    self.numCardsSelector.enabled = self.newGameState;
+    self.numCardsSelector.enabled = self.newGameState; //can only change the selector if your haven't started a game
     [self updateMoveLabelText];
     self.moveLabel.alpha = 1.0;
-    if (self.numCardsInPlay > self.grid.minimumNumberOfCells)  { // if we just added cards then we need to make sure the grid is large enough
+    
+ // if we just added cards then we need to make sure the grid is large enough
+    if (self.numCardsInPlay > self.grid.minimumNumberOfCells)  {
         self.grid.minimumNumberOfCells = self.numCardsInPlay;
         self.refreshView = YES;
     }
 //    NSLog(@"num rows = %lu, num cols = %lu",self.grid.rowCount, (unsigned long)self.grid.columnCount);
     for (int i = 0; i < self.numCardsInPlay; i++) {
-        if (self.cardsInPlay.count == self.numCardsInPlay){
+        if (self.cardsInPlay.count == self.numCardsInPlay){ // this indicates no new or removed cards
+            CardView *cardView = self.cardViews[i];
             Card *card = self.cardsInPlay[i];
+            cardView.chosen = card.isChosen;
+            NSTimeInterval delay = 0.7;
+            if ([cardView isKindOfClass:[PlayingCardView class]]) { //animate the flip if it's a playingcard
+                PlayingCardView *pcView = (PlayingCardView *)cardView;
+                pcView.faceUp = card.isChosen;
+            }
+            else
+                delay = 0;
             if (card.isMatched) {
-                [self animateRemovingCard:self.cardViews[i] withDelay:0];
+                [self animateRemovingCard:self.cardViews[i] withDelay:delay];
                 [self.cardViews removeObjectAtIndex:i];
                 [self.cardsInPlay removeObjectAtIndex:i];
+                [self.game removeCardAtIndex:i];
                 self.numCardsInPlay--;
                 NSLog(@"removed card at index %i, %lu (%lu) cards remain in play", i, self.cardsInPlay.count, self.numCardsInPlay);
                 self.refreshView = YES; // need to refresh view to remove card gaps
@@ -219,20 +237,19 @@ static const double timeInterval = 0.3;
                 card.chosen = NO; // reset card to unselected state
             }
         }
-        if (self.newGameState || (i+1 > self.cardsInPlay.count)) //only place cards if new game
+        if (self.newGameState || (i+1 > self.cardsInPlay.count)) //only place cards if new game or added three
         {
+            self.newGameState = NO;
             Card *newCard = [self.game cardAtIndex:i];
             [self placeCard:newCard atIndex:i withDelay:i];
             NSLog(@"&&& placing new card at index %i", i);
         }
-        CardView *cardView = self.cardViews[i];
-        Card *card = self.cardsInPlay[i];
-        cardView.chosen = card.isChosen;
 
     }
     
     if (self.refreshView) {
-        if (self.numCardsInPlay == self.cardsInPlay.count) { //the display rotated
+        self.refreshView = NO;
+        if ((self.numCardsInPlay == self.cardsInPlay.count) && (!self.matchedSomeCards)) { //the display rotated
             for (int i = 0; i < self.numCardsInPlay; i++)
                 [self moveCardToIndex:i];
         }
@@ -242,14 +259,15 @@ static const double timeInterval = 0.3;
             for (int i = 0; i < self.cardViews.count; i++)
                 [self moveCardToIndex:i];
             }
-        else if (self.numCardsInPlay > self.cardsInPlay.count){         // some cards were added
+/*        else if (self.numCardsInPlay > self.cardsInPlay.count){         // some cards were added
             self.grid.minimumNumberOfCells = self.cardsInPlay.count;    // resize the grid
             for (int i = self.cardsInPlay.count; i < self.numCardsInPlay; i++) {
                 Card *card = [self.game cardAtIndex:i];
                 [self placeCard:card atIndex:i];
             }
+
         }
-        else if (self.numCardsInPlay < self.cardsInPlay.count) { // some cards were removed
+*/        else if (self.numCardsInPlay < self.cardsInPlay.count) { // some cards were removed
             
         }
     }
@@ -258,7 +276,6 @@ static const double timeInterval = 0.3;
         self.newGameState = NO;
         self.grid = nil;
     }
-    self.refreshView = NO;
     self.scoreLabel.text = [NSString stringWithFormat:@"Score: %ld",(long)self.game.score];
 
 }
@@ -290,6 +307,11 @@ static const double timeInterval = 0.3;
         [self animateAddingCardView:cardView withDelay:(delay * timeInterval)/3.0 atIndex:index];
     }
 }
+-(void)animateFlippingCard
+{
+    
+}
+
 -(void)animateAddingCardView:(UIView *)card atIndex:(NSUInteger)index
 {
     [self animateAddingCardView:card withDelay:0 atIndex:index];
@@ -364,6 +386,7 @@ static const double timeInterval = 0.3;
                          }
                          completion:^(BOOL finished) {
                              [card removeFromSuperview];
+                             self.waitThisLongBeforeAddingCards = 0;
                              NSLog(@"animated removing a card with delay %.3f!", delay);
                          }];
         self.waitThisLongBeforeAddingCards = delay;
@@ -389,9 +412,9 @@ static const double timeInterval = 0.3;
 {
     return [UIImage imageNamed:card.isChosen ? @"cardfront" : @"cardback"];
 }
--(void)viewDidAppear:(BOOL)animated
+-(void)viewWillAppear:(BOOL)animated
 {
-    [super viewDidAppear:animated];
+    [super viewWillAppear:animated];
     [self setup];
 }
 /*- (void)viewDidLoad
