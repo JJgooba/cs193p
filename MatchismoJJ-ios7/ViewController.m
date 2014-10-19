@@ -18,11 +18,11 @@
 
 @interface ViewController () <UIDynamicAnimatorDelegate>
 @property (nonatomic) int flipCount;
-//@property (strong, nonatomic) IBOutletCollection(UIButton) NSArray *cardButtons;
 @property (strong, nonatomic) NSMutableArray *cardViews;
 @property (strong, nonatomic) NSMutableArray *cardsInPlay;
 @property (weak, nonatomic) IBOutlet UISegmentedControl *numCardsSelector;
 @property (weak, nonatomic) IBOutlet UILabel *scoreLabel;
+@property (strong, nonatomic) UIDynamicAnimator *animator;
 @property (nonatomic) BOOL newGameState;
 @property (nonatomic) BOOL refreshView;
 @property (nonatomic) BOOL matchedSomeCards;
@@ -273,11 +273,10 @@ static const double timeInterval = 0.3;
 // returns a new SetCardView based on card and rect
 -(UIView *)cardViewForCard:(Card *)card withCGRect:(CGRect)rect
 {
-    return nil; //implement in subclass
+    return nil; // abstract -- implement in subclass
 }
 
 //moves an existing card to new location (which it uses grid to find)
-
 -(void) placeCard:(Card *)card atIndex:(NSUInteger) index
 {
     [self placeCard:card atIndex:index withDelay:0];
@@ -297,11 +296,11 @@ static const double timeInterval = 0.3;
         [self animateAddingCardView:cardView withDelay:(delay * timeInterval)/3.0 atIndex:index];
     }
 }
--(void)animateFlippingCard
+/*-(void)animateFlippingCard
 {
     
 }
-
+*/
 -(void)animateAddingCardView:(UIView *)card atIndex:(NSUInteger)index
 {
     [self animateAddingCardView:card withDelay:0 atIndex:index];
