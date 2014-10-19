@@ -21,7 +21,7 @@
 }
 
 static const CGFloat cardsAspectRatio = 2.0/3.0;
-static const NSUInteger minimumNumCards = 6;
+static const NSUInteger minimumNumCards = 12;
 
 -(CGFloat) cardAspectRatio
 {
@@ -31,6 +31,11 @@ static const NSUInteger minimumNumCards = 6;
 -(NSUInteger) minNumCards
 {
     return minimumNumCards;
+}
+
+-(NSUInteger)numCardsinDeck
+{
+    return [PlayingCardDeck fullDeckCount];
 }
 
 -(UIView *)cardViewForCard:(Card *)card withCGRect:(CGRect)rect //overriding from parent class
