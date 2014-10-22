@@ -408,12 +408,12 @@ static const double timeInterval = 0.3;
 {
     return [UIImage imageNamed:card.isChosen ? @"cardfront" : @"cardback"];
 }
-/*-(void)viewWillAppear:(BOOL)animated
+-(void)viewWillAppear:(BOOL)animated
 {
     [super viewWillAppear:animated];
-    [self setup];
+    [self updateUI];
 }
- */
+
 - (void)viewDidLoad
 {
     [super viewDidLoad];
@@ -429,7 +429,7 @@ static const double timeInterval = 0.3;
     self.cardsInPlay = nil;
     self.cardViews = nil;
     self.grid = nil;
-    [self updateUI];
+//    [self updateUI];
 }
 
 -(NSAttributedString *)attributedMoveHistory
