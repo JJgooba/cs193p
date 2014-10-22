@@ -11,7 +11,7 @@
 #import <UIKit/UIKit.h>
 #import "CardMatchingGame.h"
 
-@interface ViewController : UIViewController
+@interface ViewController : UIViewController 
 @property (strong, nonatomic) CardMatchingGame *game;
 @property (nonatomic) NSUInteger numCardsInPlay;
 -(NSAttributedString *)attributedMoveHistory;

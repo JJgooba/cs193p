@@ -22,7 +22,7 @@
 @property (strong, nonatomic) NSMutableArray *cardsInPlay;
 @property (weak, nonatomic) IBOutlet UISegmentedControl *numCardsSelector;
 @property (weak, nonatomic) IBOutlet UILabel *scoreLabel;
-@property (strong, nonatomic) UIDynamicAnimator *animator;
+@property (strong, nonatomic) UIDynamicAnimator *cardAnimator;
 @property (nonatomic) BOOL newGameState;
 @property (nonatomic) BOOL refreshView;
 @property (nonatomic) BOOL matchedSomeCards;
@@ -57,7 +57,14 @@ static const double timeInterval = 0.3;
     return _cardsInPlay;
 }
 
-//this should be overridden
+-(UIDynamicAnimator *)cardAnimator
+{
+    if (!_cardAnimator) {
+        _cardAnimator = [[UIDynamicAnimator alloc] initWithReferenceView:self.cardContainingView];
+        _cardAnimator.delegate = self; // need implement (conform to) UIDynamicAnimatorDelegate in this class (see above)
+    }
+    return _cardAnimator;
+}
 
 // the professor's class which gives approximate dimensions to use for the card views
 -(Grid *) grid
