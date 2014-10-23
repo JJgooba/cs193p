@@ -14,6 +14,7 @@
 #import "Grid.h"
 #import "CardView.h"
 #import "PlayingCardView.h"
+#import "CardHoldingView.h"
 
 
 @interface ViewController () <UIDynamicAnimatorDelegate>
@@ -23,13 +24,14 @@
 @property (weak, nonatomic) IBOutlet UISegmentedControl *numCardsSelector;
 @property (weak, nonatomic) IBOutlet UILabel *scoreLabel;
 @property (strong, nonatomic) UIDynamicAnimator *cardAnimator;
+@property (strong, nonatomic) UIPinchGestureRecognizer *pinch;
 @property (nonatomic) BOOL newGameState;
 @property (nonatomic) BOOL refreshView;
 @property (nonatomic) BOOL matchedSomeCards;
 @property (weak, nonatomic) IBOutlet UILabel *moveLabel;
 @property (strong, nonatomic) NSMutableArray *moveHistory;
 @property (strong, nonatomic) GameInfo *gameInfo;
-@property (weak, nonatomic) IBOutlet UIView *cardContainingView;
+@property (weak, nonatomic) IBOutlet CardHoldingView *cardContainingView;
 @property (strong, nonatomic) Grid *grid;
 @property (nonatomic) CGFloat cardAspectRatio; // for input to Grid -- override in subclass
 @property (nonatomic) NSUInteger minNumCards; // for input to Grid -- override in subclass
@@ -64,6 +66,13 @@ static const double timeInterval = 0.3;
         _cardAnimator.delegate = self; // need implement (conform to) UIDynamicAnimatorDelegate in this class (see above)
     }
     return _cardAnimator;
+}
+
+-(UIPinchGestureRecognizer *)pinch
+{
+    if (!_pinch)
+        _pinch = [[UIPinchGestureRecognizer alloc] initWithTarget:self.cardContainingView action:pinch:];
+    return _pinch;
 }
 
 // the professor's class which gives approximate dimensions to use for the card views

@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="6245" systemVersion="14A389" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" initialViewController="f3l-9P-lYG">
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="6245" systemVersion="13F34" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" initialViewController="f3l-9P-lYG">
     <dependencies>
-        <deployment defaultVersion="1792" identifier="iOS"/>
         <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="6238"/>
         <capability name="Alignment constraints to the first baseline" minToolsVersion="6.0"/>
         <capability name="Alignment constraints with different attributes" minToolsVersion="5.1"/>
@@ -79,7 +78,7 @@
                         </constraints>
                     </view>
                     <navigationItem key="navigationItem" id="z11-Y9-rzH">
-                        <barButtonItem key="rightBarButtonItem" title="Move History&gt;" id="OZu-wm-v7c">
+                        <barButtonItem key="rightBarButtonItem" title="Move History>" id="OZu-wm-v7c">
                             <connections>
                                 <segue destination="hew-rn-7Bx" kind="push" identifier="ShowHistory" id="MsD-GV-zU7"/>
                             </connections>
@@ -181,7 +180,7 @@
                         </constraints>
                     </view>
                     <navigationItem key="navigationItem" title="Set!" id="apb-K7-dL8">
-                        <barButtonItem key="rightBarButtonItem" title="Move History&gt;" id="Bg9-Ee-2cz">
+                        <barButtonItem key="rightBarButtonItem" title="Move History>" id="Bg9-Ee-2cz">
                             <connections>
                                 <segue destination="hew-rn-7Bx" kind="push" identifier="ShowHistory" id="FtS-z8-kN8"/>
                             </connections>
