@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="6245" systemVersion="13F34" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" initialViewController="f3l-9P-lYG">
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="6250" systemVersion="13F34" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" initialViewController="f3l-9P-lYG">
     <dependencies>
-        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="6238"/>
+        <deployment identifier="iOS"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="6244"/>
         <capability name="Alignment constraints to the first baseline" minToolsVersion="6.0"/>
         <capability name="Alignment constraints with different attributes" minToolsVersion="5.1"/>
         <capability name="Constraints to layout margins" minToolsVersion="6.0"/>
@@ -51,7 +52,7 @@
                                     <action selector="newGame:" destination="vXZ-lx-hvc" eventType="valueChanged" id="5Cg-27-B0w"/>
                                 </connections>
                             </segmentedControl>
-                            <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="QEc-HQ-t6w">
+                            <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="QEc-HQ-t6w" customClass="CardHoldingView">
                                 <rect key="frame" x="7" y="72" width="307" height="308"/>
                                 <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
                                 <gestureRecognizers/>
@@ -107,7 +108,7 @@
                         <viewControllerLayoutGuide type="top" id="Q4Y-Tx-a2K"/>
                         <viewControllerLayoutGuide type="bottom" id="nzv-ui-39B"/>
                     </layoutGuides>
-                    <view key="view" contentMode="scaleToFill" id="Rjv-Kn-5PU" customClass="set">
+                    <view key="view" contentMode="scaleToFill" id="Rjv-Kn-5PU">
                         <rect key="frame" x="0.0" y="0.0" width="320" height="431"/>
                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                         <subviews>
@@ -135,7 +136,7 @@
                                 <fontDescription key="fontDescription" type="system" pointSize="10"/>
                                 <nil key="highlightedColor"/>
                             </label>
-                            <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="bgy-Mf-2pb">
+                            <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="bgy-Mf-2pb" customClass="CardHoldingView">
                                 <rect key="frame" x="5" y="72" width="310" height="268"/>
                                 <color key="backgroundColor" red="0.96862751245498657" green="0.90588241815567017" blue="0.97254908084869385" alpha="1" colorSpace="deviceRGB"/>
                                 <gestureRecognizers/>

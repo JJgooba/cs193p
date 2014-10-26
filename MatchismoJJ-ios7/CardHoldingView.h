@@ -9,5 +9,9 @@
 #import <UIKit/UIKit.h>
 
 @interface CardHoldingView : UIView
--(void)pinch;
+@property (nonatomic) BOOL gathered;
+-(void)gatherCards:(UIPinchGestureRecognizer *)gesture;
+-(void)ungatherCards;
+-(void)removeSnapAnimations;
+-(void)setup;
 @end

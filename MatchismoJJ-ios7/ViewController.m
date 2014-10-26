@@ -23,8 +23,6 @@
 @property (strong, nonatomic) NSMutableArray *cardsInPlay;
 @property (weak, nonatomic) IBOutlet UISegmentedControl *numCardsSelector;
 @property (weak, nonatomic) IBOutlet UILabel *scoreLabel;
-@property (strong, nonatomic) UIDynamicAnimator *cardAnimator;
-@property (strong, nonatomic) UIPinchGestureRecognizer *pinch;
 @property (nonatomic) BOOL newGameState;
 @property (nonatomic) BOOL refreshView;
 @property (nonatomic) BOOL matchedSomeCards;
@@ -32,6 +30,7 @@
 @property (strong, nonatomic) NSMutableArray *moveHistory;
 @property (strong, nonatomic) GameInfo *gameInfo;
 @property (weak, nonatomic) IBOutlet CardHoldingView *cardContainingView;
+@property (strong, nonatomic) UIPinchGestureRecognizer *pinch;
 @property (strong, nonatomic) Grid *grid;
 @property (nonatomic) CGFloat cardAspectRatio; // for input to Grid -- override in subclass
 @property (nonatomic) NSUInteger minNumCards; // for input to Grid -- override in subclass
@@ -59,29 +58,13 @@ static const double timeInterval = 0.3;
     return _cardsInPlay;
 }
 
--(UIDynamicAnimator *)cardAnimator
-{
-    if (!_cardAnimator) {
-        _cardAnimator = [[UIDynamicAnimator alloc] initWithReferenceView:self.cardContainingView];
-        _cardAnimator.delegate = self; // need implement (conform to) UIDynamicAnimatorDelegate in this class (see above)
-    }
-    return _cardAnimator;
-}
-
--(UIPinchGestureRecognizer *)pinch
-{
-    if (!_pinch)
-        _pinch = [[UIPinchGestureRecognizer alloc] initWithTarget:self.cardContainingView action:pinch:];
-    return _pinch;
-}
-
 // the professor's class which gives approximate dimensions to use for the card views
 -(Grid *) grid
 {
     if (!_grid) {
         _grid = [[Grid alloc] init];
         _grid.size = self.cardContainingView.bounds.size;
-//        NSLog(@"  *** grid size is %.0f x %.0f",_grid.size.width, _grid.size.height);
+        NSLog(@"  *** grid size is %.0f x %.0f",_grid.size.width, _grid.size.height);
         _grid.cellAspectRatio = self.cardAspectRatio;
         _grid.minimumNumberOfCells = self.numCardsInPlay;
     }
@@ -123,27 +106,40 @@ static const double timeInterval = 0.3;
     return _gameInfo;
 }
 
+-(UIPinchGestureRecognizer *)pinch
+{
+    if (!_pinch)
+        _pinch = [[UIPinchGestureRecognizer alloc] initWithTarget:self.cardContainingView action:@selector(gatherCards:)];
+    return _pinch;
+}
+
 -(Deck *)createDeck {
     return nil;
 }
 
 //the action for when a card is tapped on the screen
 - (IBAction)cardTap:(UITapGestureRecognizer *)sender {
-    UIView *tappedView = [self.cardContainingView hitTest:[sender locationInView:self.cardContainingView] withEvent:NULL];
-    NSUInteger i = [self.cardViews indexOfObject:tappedView];
-//    NSLog(@"you tapped the card at index %lu", i);
-    if (i < self.cardViews.count) { //if we tapped on a card
-        CardView *cardView = self.cardViews[i];
-        cardView.chosen = !cardView.isChosen;
-        if ([cardView isKindOfClass:[PlayingCardView class]]) {
-            PlayingCardView *pcView = (PlayingCardView *)cardView;
-            pcView.faceUp = !pcView.faceUp;
-        }
+    if (!self.cardContainingView.gathered) {
+        UIView *tappedView = [self.cardContainingView hitTest:[sender locationInView:self.cardContainingView] withEvent:NULL];
+        NSUInteger i = [self.cardViews indexOfObject:tappedView];
+        //    NSLog(@"you tapped the card at index %lu", i);
+        if (i < self.cardViews.count) { //if we tapped on a card
+            CardView *cardView = self.cardViews[i];
+            cardView.chosen = !cardView.isChosen;
+            if ([cardView isKindOfClass:[PlayingCardView class]]) {
+                PlayingCardView *pcView = (PlayingCardView *)cardView;
+                pcView.faceUp = !pcView.faceUp;
+            }
             
-        [self.game chooseCardAtIndex:i];
-        [self.moveHistory addObject:[self attributedStringFromCardsArray:self.game.lastMatchedCards]];
-        [self writeGameInfo];  //update game score info in NSUserDefaults
-        [self updateUI];
+            [self.game chooseCardAtIndex:i];
+            [self.moveHistory addObject:[self attributedStringFromCardsArray:self.game.lastMatchedCards]];
+            [self writeGameInfo];  //update game score info in NSUserDefaults
+            [self updateUI];
+        }
+    }
+    else { // cards are gathered, must disperse
+        [self.cardContainingView ungatherCards];
+//        [self updateUI];
     }
 }
 - (IBAction)threeMoreCards:(UIButton *)sender {
@@ -181,6 +177,7 @@ static const double timeInterval = 0.3;
     self.moveHistory = nil;
     self.refreshView = NO;
     [self setup];
+    [self updateUI];
 }
 
 -(NSInteger)numCardsInGame // returns number of cards to match in new game
@@ -218,6 +215,7 @@ static const double timeInterval = 0.3;
 
 -(void)updateUI  // updates the GUI
 {
+    NSLog(@"updateUI: %.0fx%.0f", self.cardContainingView.bounds.size.width, self.cardContainingView.bounds.size.height);
     self.numCardsSelector.enabled = self.newGameState; //can only change the selector if your haven't started a game
     [self updateMoveLabelText];
     self.moveLabel.alpha = 1.0;
@@ -227,7 +225,7 @@ static const double timeInterval = 0.3;
         self.grid.minimumNumberOfCells = self.numCardsInPlay;
         self.refreshView = YES;
     }
-//    NSLog(@"num rows = %lu, num cols = %lu",self.grid.rowCount, (unsigned long)self.grid.columnCount);
+    NSUInteger currentCardCount = self.cardsInPlay.count; //used to time the delay for animating 3 more cards below
     for (int i = 0; i < self.numCardsInPlay; i++) {
         if (self.cardsInPlay.count == self.numCardsInPlay){ // this indicates no new or removed cards
             CardView *cardView = self.cardViews[i];
@@ -236,7 +234,7 @@ static const double timeInterval = 0.3;
             if ([cardView isKindOfClass:[PlayingCardView class]]) { //animate the flip if it's a playingcard
                 PlayingCardView *pcView = (PlayingCardView *)cardView;
                 pcView.faceUp = card.isChosen;
-                self.waitThisLongBeforeAddingCards = 0.7;
+                self.waitThisLongBeforeAddingCards = 0.7; // allows time to flip the card over before removing it if it's a match
             }
             else
                 self.waitThisLongBeforeAddingCards = 0;
@@ -256,7 +254,7 @@ static const double timeInterval = 0.3;
         if (self.newGameState || (i+1 > self.cardsInPlay.count)) //only place cards if new game or added three
         {
             Card *newCard = [self.game cardAtIndex:i];
-            NSTimeInterval delay = self.newGameState ? i : i+1-self.cardsInPlay.count;
+            NSTimeInterval delay = self.newGameState ? i : i+1-currentCardCount;
             [self placeCard:newCard atIndex:i withDelay:delay];
 //            NSLog(@"&&& placing new card at index %i", i);
         }
@@ -417,18 +415,6 @@ static const double timeInterval = 0.3;
 {
     return [UIImage imageNamed:card.isChosen ? @"cardfront" : @"cardback"];
 }
--(void)viewWillAppear:(BOOL)animated
-{
-    [super viewWillAppear:animated];
-    [self updateUI];
-}
-
-- (void)viewDidLoad
-{
-    [super viewDidLoad];
-    [self setup];
-	// Do any additional setup after loading the view.
-}
 
 -(void) setup
 {
@@ -438,6 +424,9 @@ static const double timeInterval = 0.3;
     self.cardsInPlay = nil;
     self.cardViews = nil;
     self.grid = nil;
+    [self.cardContainingView setup];
+    [self.cardContainingView addGestureRecognizer:self.pinch];
+    NSLog(@"setup: %.0fx%.0f", self.cardContainingView.bounds.size.width, self.cardContainingView.bounds.size.height);
 //    [self updateUI];
 }
 
@@ -449,6 +438,27 @@ static const double timeInterval = 0.3;
         [result appendAttributedString:[[NSAttributedString alloc] initWithString:@"\n"]];
     }
     return result;
+}
+
+-(void)viewWillAppear:(BOOL)animated
+{
+    [super viewWillAppear:animated];
+    NSLog(@"ViewWillAppear: %.0fx%.0f", self.cardContainingView.bounds.size.width, self.cardContainingView.bounds.size.height);
+}
+
+-(void)viewDidAppear:(BOOL)animated
+{
+    [super viewDidAppear:animated];
+    [self updateUI];
+    NSLog(@"ViewDidAppear: %.0fx%.0f", self.cardContainingView.bounds.size.width, self.cardContainingView.bounds.size.height);
+}
+
+- (void)viewDidLoad
+{
+    [super viewDidLoad];
+    [self setup];
+//    NSLog(@"ViewDidLoad: %.0fx%.0f", self.cardContainingView.bounds.size.width, self.cardContainingView.bounds.size.height);
+    // Do any additional setup after loading the view.
 }
 
 -(void)prepareForSegue:(UIStoryboardSegue *)segue sender:(id)sender
