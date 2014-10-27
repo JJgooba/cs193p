@@ -16,6 +16,7 @@
 @property (strong, nonatomic) NSMutableArray *snap;  // array of UISnapBehaviors
 @property (strong, nonatomic) NSMutableArray *cardCenters;
 @property (nonatomic) BOOL allowAnimation;
+@property (nonatomic) BOOL cardsBeingDragged;
 @end
 @implementation CardHoldingView
 
@@ -30,6 +31,7 @@
 {
     self.gathered = NO;
     self.allowAnimation = YES;
+    self.cardsBeingDragged = NO;
 }
 
 -(UIDynamicAnimator *)cardAnimator
@@ -84,8 +86,11 @@
 //    [self setNeedsDisplay];
 }
 
--(void)ungatherCards
+-(void)ungatherCards // stack of cards was tapped
 {
+    [self removeAnimations];
+    self.cardsBeingDragged = NO;
+    NSLog(@"ungathering cards");
     int i = 0;
     for (CardView *cardView in self.subviews) {
         CGPoint originalCenter = [self.cardCenters[i] CGPointValue];
@@ -96,13 +101,13 @@
     }
     self.gathered = NO;
     [self.cardCenters removeAllObjects];
-    [self setNeedsDisplay];
 }
 
 -(void)removeAnimations
 {
     [self.cardAnimator removeAllBehaviors];
     self.snap = nil;
+    NSLog(@"removed animations");
 }
 
 -(void)moveCards:(UIPanGestureRecognizer *)pan
@@ -110,6 +115,7 @@
     CGPoint finger = [pan locationInView:self];
     if (pan.state == UIGestureRecognizerStateBegan) {
         [self removeAnimations];
+        self.cardsBeingDragged = YES;
         for (CardView *cardView in self.subviews) {
             cardView.center = finger;
             [self.attachments addObject:[[UIAttachmentBehavior alloc] initWithItem:cardView attachedToAnchor:finger]];
@@ -123,7 +129,7 @@
 
 -(void)dynamicAnimatorDidPause:(UIDynamicAnimator *)animator
 {
-//    [self removeAnimations];
+    if (!self.cardsBeingDragged) [self removeAnimations];
     self.allowAnimation = YES;
     NSLog(@"stuff stopped moving");
 }
