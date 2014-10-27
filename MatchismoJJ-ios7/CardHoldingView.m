@@ -12,8 +12,8 @@
 
 @interface CardHoldingView () <UIDynamicAnimatorDelegate>
 @property (strong, nonatomic) UIDynamicAnimator *cardAnimator;
-@property (strong, nonatomic) NSMutableArray *attachments;  //array of UIAttachmentBehaviors
-@property (strong, nonatomic) NSMutableArray *snap;  //array of UISnapBehaviors
+@property (strong, nonatomic) NSMutableArray *attachments;  // array of UIAttachmentBehaviors
+@property (strong, nonatomic) NSMutableArray *snap;  // array of UISnapBehaviors
 @property (strong, nonatomic) NSMutableArray *cardCenters;
 @property (nonatomic) BOOL allowAnimation;
 @end
@@ -72,9 +72,6 @@
             [self.cardCenters addObject:[NSValue valueWithCGPoint:cardView.center]];  //store original centers to restore cards to original location
             [self.snap addObject:[[UISnapBehavior alloc] initWithItem:cardView snapToPoint:viewCenter]];
             [self.cardAnimator addBehavior:[self.snap lastObject]];
-            //            [self.attachments addObject:[[UIAttachmentBehavior alloc] initWithItem:cardView attachedToAnchor:self.center]];
-            //            [self.cardAnimator addBehavior:[self.attachments lastObject]];
-//            NSLog(@"hello %.0f, %.0f : %.0f, %.0f card is %.0f, %.0f", self.center.x, self.center.y, self.bounds.size.width, self.frame.size.height, cardView.frame.origin.x, cardView.frame.origin.y);
         }
     }
     if (gesture.state == UIGestureRecognizerStateEnded) {
@@ -102,15 +99,31 @@
     [self setNeedsDisplay];
 }
 
--(void)removeSnapAnimations
+-(void)removeAnimations
 {
     [self.cardAnimator removeAllBehaviors];
     self.snap = nil;
 }
 
+-(void)moveCards:(UIPanGestureRecognizer *)pan
+{
+    CGPoint finger = [pan locationInView:self];
+    if (pan.state == UIGestureRecognizerStateBegan) {
+        [self removeAnimations];
+        for (CardView *cardView in self.subviews) {
+            cardView.center = finger;
+            [self.attachments addObject:[[UIAttachmentBehavior alloc] initWithItem:cardView attachedToAnchor:finger]];
+            [self.cardAnimator addBehavior:[self.attachments lastObject]];
+        }
+    }
+    if (pan.state == UIGestureRecognizerStateChanged)
+        for (UIAttachmentBehavior *attach in self.attachments)
+            attach.anchorPoint = finger;
+}
+
 -(void)dynamicAnimatorDidPause:(UIDynamicAnimator *)animator
 {
-    [self removeSnapAnimations];
+//    [self removeAnimations];
     self.allowAnimation = YES;
     NSLog(@"stuff stopped moving");
 }

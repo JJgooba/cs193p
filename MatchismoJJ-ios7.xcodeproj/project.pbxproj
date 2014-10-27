@@ -181,10 +181,12 @@
 				6F08133E1852D8100018DF54 /* ViewController.m */,
 				6FC5E76E18BC0FC300F5719D /* PlayingCardGameViewController.h */,
 				6FC5E76F18BC0FC300F5719D /* PlayingCardGameViewController.m */,
-				6F0813401852D8100018DF54 /* Images.xcassets */,
-				6F08132F1852D8100018DF54 /* Supporting Files */,
 				6F7C339119F87EF20011B00A /* CardHoldingView.h */,
 				6F7C339219F87EF20011B00A /* CardHoldingView.m */,
+				6F0813401852D8100018DF54 /* Images.xcassets */,
+				6F2F331019CEB82D008CA572 /* Grid.m */,
+				6F2F331119CEB82D008CA572 /* Grid.h */,
+				6F08132F1852D8100018DF54 /* Supporting Files */,
 			);
 			path = "MatchismoJJ-ios7";
 			sourceTree = "<group>";
@@ -192,8 +194,6 @@
 		6F08132F1852D8100018DF54 /* Supporting Files */ = {
 			isa = PBXGroup;
 			children = (
-				6F2F331019CEB82D008CA572 /* Grid.m */,
-				6F2F331119CEB82D008CA572 /* Grid.h */,
 				6F0813371852D8100018DF54 /* AppDelegate.h */,
 				6F0813381852D8100018DF54 /* AppDelegate.m */,
 				6F0813301852D8100018DF54 /* MatchismoJJ-ios7-Info.plist */,

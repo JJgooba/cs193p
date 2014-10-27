@@ -31,6 +31,7 @@
 @property (strong, nonatomic) GameInfo *gameInfo;
 @property (weak, nonatomic) IBOutlet CardHoldingView *cardContainingView;
 @property (strong, nonatomic) UIPinchGestureRecognizer *pinch;
+@property (strong, nonatomic) UIPanGestureRecognizer *pan;
 @property (strong, nonatomic) Grid *grid;
 @property (nonatomic) CGFloat cardAspectRatio; // for input to Grid -- override in subclass
 @property (nonatomic) NSUInteger minNumCards; // for input to Grid -- override in subclass
@@ -113,8 +114,15 @@ static const double timeInterval = 0.3;
     return _pinch;
 }
 
+-(UIPanGestureRecognizer *)pan
+{
+    if (!_pan)
+        _pan = [[UIPanGestureRecognizer alloc] initWithTarget:self.cardContainingView action:@selector(moveCards:)];
+    return _pan;
+}
+
 -(Deck *)createDeck {
-    return nil;
+    return nil; //abstract
 }
 
 //the action for when a card is tapped on the screen
@@ -426,6 +434,7 @@ static const double timeInterval = 0.3;
     self.grid = nil;
     [self.cardContainingView setup];
     [self.cardContainingView addGestureRecognizer:self.pinch];
+    [self.cardContainingView addGestureRecognizer:self.pan];
     NSLog(@"setup: %.0fx%.0f", self.cardContainingView.bounds.size.width, self.cardContainingView.bounds.size.height);
 //    [self updateUI];
 }

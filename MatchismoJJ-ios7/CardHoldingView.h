@@ -12,6 +12,7 @@
 @property (nonatomic) BOOL gathered;
 -(void)gatherCards:(UIPinchGestureRecognizer *)gesture;
 -(void)ungatherCards;
--(void)removeSnapAnimations;
+-(void)removeAnimations;
+-(void)moveCards:(UIPanGestureRecognizer *)pan;
 -(void)setup;
 @end
