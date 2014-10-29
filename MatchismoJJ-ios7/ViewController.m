@@ -65,11 +65,9 @@ static const double timeInterval = 0.3;
     if (!_grid) {
         _grid = [[Grid alloc] init];
         _grid.size = self.cardContainingView.bounds.size;
-        NSLog(@"  *** grid size is %.0f x %.0f",_grid.size.width, _grid.size.height);
         _grid.cellAspectRatio = self.cardAspectRatio;
         _grid.minimumNumberOfCells = self.numCardsInPlay;
     }
-//    NSLog(@"  *** %lu x %lu grid size is %.0f x %.0f and superview is %.0f x %.0f",_grid.rowCount, _grid.columnCount, _grid.size.width, _grid.size.height, self.cardContainingView.bounds.size.width, self.cardContainingView.bounds.size.height);
     return _grid;
 }
 
@@ -81,12 +79,11 @@ static const double timeInterval = 0.3;
     return _moveHistory;
 }
 
-// to be overridden in subclass
+// Depends on game in subclass.  To be overridden in subclass.
 -(NSUInteger)numCardsinDeck
 {
     return 6; //bogus number to make sure it's being overridden in subclass
 }
-
 
 -(CardMatchingGame *)game {  //lazy instantiation of game
     if (!_game) {
@@ -107,25 +104,28 @@ static const double timeInterval = 0.3;
     return _gameInfo;
 }
 
--(UIPinchGestureRecognizer *)pinch
+-(UIPinchGestureRecognizer *)pinch // gesture to gather up cards
 {
     if (!_pinch)
-        _pinch = [[UIPinchGestureRecognizer alloc] initWithTarget:self.cardContainingView action:@selector(gatherCards:)];
+        _pinch = [[UIPinchGestureRecognizer alloc] initWithTarget:self.cardContainingView
+                                                           action:@selector(gatherCards:)];
     return _pinch;
 }
 
--(UIPanGestureRecognizer *)pan
+-(UIPanGestureRecognizer *)pan // gesture to flip a card or move gathered stack around
 {
     if (!_pan)
-        _pan = [[UIPanGestureRecognizer alloc] initWithTarget:self.cardContainingView action:@selector(moveCards:)];
+        _pan = [[UIPanGestureRecognizer alloc] initWithTarget:self.cardContainingView
+                                                       action:@selector(moveCards:)];
     return _pan;
 }
 
--(Deck *)createDeck {
+-(Deck *)createDeck
+{
     return nil; //abstract
 }
 
-//the action for when a card is tapped on the screen
+//the action for when a card (or the stack of cards) is tapped on the screen
 - (IBAction)cardTap:(UITapGestureRecognizer *)sender {
     if (!self.cardContainingView.gathered) {
         UIView *tappedView = [self.cardContainingView hitTest:[sender locationInView:self.cardContainingView] withEvent:NULL];
@@ -147,23 +147,20 @@ static const double timeInterval = 0.3;
     }
     else { // cards are gathered, must disperse
         [self.cardContainingView ungatherCards];
-//        [self updateUI];
     }
 }
 - (IBAction)threeMoreCards:(UIButton *)sender {
     self.numCardsInPlay = self.numCardsInPlay + 3;
     self.refreshView = YES;
+    if ([self.game numCardsRemainingInDeck] <= 0) {
+        sender.alpha = 0.3;
+        [sender setTitle: [NSString stringWithFormat:@"No More Cards"] forState:UIControlStateDisabled];
+        sender.enabled = NO;
+    }
+        
     [self updateUI];
 }
 
-/*- (IBAction)touchCardButton:(UIButton *)sender {
-    int chosenButtonIndex = (int)[self.cardButtons indexOfObject:sender];
-    [self.game chooseCardAtIndex:chosenButtonIndex];
-    [self.moveHistory addObject:[self attributedStringFromCardsArray:self.game.lastMatchedCards]];
-    [self writeGameInfo];  //update game score info in NSUserDefaults
-    [self updateUI];
-}
-*/
 -(void)writeGameInfo  //writes current game stats to NSUserDefaults
 {
     [self.gameInfo updateEndTime]; // set end time
@@ -189,7 +186,7 @@ static const double timeInterval = 0.3;
 }
 
 -(NSInteger)numCardsInGame // returns number of cards to match in new game
-{
+{                           // overridden in Set subclass
     return self.numCardsSelector.selectedSegmentIndex + 2;
 }
 
@@ -223,7 +220,6 @@ static const double timeInterval = 0.3;
 
 -(void)updateUI  // updates the GUI
 {
-    NSLog(@"updateUI: %.0fx%.0f", self.cardContainingView.bounds.size.width, self.cardContainingView.bounds.size.height);
     self.numCardsSelector.enabled = self.newGameState; //can only change the selector if your haven't started a game
     [self updateMoveLabelText];
     self.moveLabel.alpha = 1.0;
@@ -252,7 +248,6 @@ static const double timeInterval = 0.3;
                 [self.cardsInPlay removeObjectAtIndex:i];
                 [self.game removeCardAtIndex:i];
                 self.numCardsInPlay--;
-//                NSLog(@"removed card at index %i, %lu (%lu) cards remain in play", i, self.cardsInPlay.count, self.numCardsInPlay);
                 self.refreshView = YES; // need to refresh view to remove card gaps
                 self.matchedSomeCards = YES;
                 i--; // decrement i so we don't skip the next card which just slid into this position
@@ -264,7 +259,6 @@ static const double timeInterval = 0.3;
             Card *newCard = [self.game cardAtIndex:i];
             NSTimeInterval delay = self.newGameState ? i : i+1-currentCardCount;
             [self placeCard:newCard atIndex:i withDelay:delay];
-//            NSLog(@"&&& placing new card at index %i", i);
         }
     }    
     if (self.refreshView) {
@@ -307,22 +301,16 @@ static const double timeInterval = 0.3;
 // places card in the GUI at (row, col) as derived from index
 -(void) placeCard:(Card *)card atIndex:(NSUInteger) index withDelay:(NSUInteger)delay
 {
-//    NSLog(@"within placeCard, self.grid.minimumNumberOfCells=%lu", (unsigned long)self.grid.minimumNumberOfCells);
     if (card) {
         NSUInteger row = (index  / self.grid.columnCount);
         NSUInteger col = index - (row * self.grid.columnCount);
-//        NSLog(@"placing card #%lu (%@) at row %lu col %lu", (unsigned long)index, card.contents, (unsigned long)row, (unsigned long)col);
         UIView *cardView = [self cardViewForCard:card withCGRect:[self.grid frameOfCellAtRow:row inColumn:col]];
         [self.cardViews addObject:cardView];
         [self.cardsInPlay addObject:card];
         [self animateAddingCardView:cardView withDelay:(delay * timeInterval)/3.0 atIndex:index];
     }
 }
-/*-(void)animateFlippingCard
-{
-    
-}
-*/
+
 -(void)animateAddingCardView:(UIView *)card atIndex:(NSUInteger)index
 {
     [self animateAddingCardView:card withDelay:0 atIndex:index];
@@ -334,14 +322,12 @@ static const double timeInterval = 0.3;
         CGRect originalFrame = card.frame;
         card.center = CGPointMake(self.cardContainingView.bounds.size.width * 3.0, self.cardContainingView.bounds.size.height * 3.0);
 
-//        NSLog(@"moving from (%.0f,%.0f)",card.frame.origin.x, card.frame.origin.y);
         [self.cardContainingView addSubview:card];  //add to main GUI (off screen)
         [UIView animateWithDuration:timeInterval
                               delay:delay + self.waitThisLongBeforeAddingCards
                             options:UIViewAnimationOptionCurveEaseInOut
                          animations:^{
                              card.frame = originalFrame;
-//                             NSLog(@"now moving card to (%.0f,%.0f) in %lux%lu grid", card.frame.origin.x, card.frame.origin.y, self.grid.rowCount, self.grid.columnCount);
                          }
                          completion:NULL];
     }
@@ -365,7 +351,6 @@ static const double timeInterval = 0.3;
         }
     }
 }
-
 
 -(void) removeAllCardsFromSuperView
 {
@@ -398,7 +383,6 @@ static const double timeInterval = 0.3;
                          completion:^(BOOL finished) {
                              [card removeFromSuperview];
                              self.waitThisLongBeforeAddingCards = 0;
-//                             NSLog(@"animated removing a card with delay %.3f!", delay);
                          }];
         self.waitThisLongBeforeAddingCards = delay;
     }
@@ -436,7 +420,6 @@ static const double timeInterval = 0.3;
     [self.cardContainingView addGestureRecognizer:self.pinch];
     [self.cardContainingView addGestureRecognizer:self.pan];
     NSLog(@"setup: %.0fx%.0f", self.cardContainingView.bounds.size.width, self.cardContainingView.bounds.size.height);
-//    [self updateUI];
 }
 
 -(NSAttributedString *)attributedMoveHistory
@@ -455,19 +438,16 @@ static const double timeInterval = 0.3;
     NSLog(@"ViewWillAppear: %.0fx%.0f", self.cardContainingView.bounds.size.width, self.cardContainingView.bounds.size.height);
 }
 
--(void)viewDidAppear:(BOOL)animated
+-(void)viewDidAppear:(BOOL)animated  // call updateUI here as view sizes are finally stable
 {
     [super viewDidAppear:animated];
     [self updateUI];
-    NSLog(@"ViewDidAppear: %.0fx%.0f", self.cardContainingView.bounds.size.width, self.cardContainingView.bounds.size.height);
 }
 
 - (void)viewDidLoad
 {
     [super viewDidLoad];
     [self setup];
-//    NSLog(@"ViewDidLoad: %.0fx%.0f", self.cardContainingView.bounds.size.width, self.cardContainingView.bounds.size.height);
-    // Do any additional setup after loading the view.
 }
 
 -(void)prepareForSegue:(UIStoryboardSegue *)segue sender:(id)sender

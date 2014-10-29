@@ -20,13 +20,6 @@
 @end
 @implementation CardHoldingView
 
-/*
-// Only override drawRect: if you perform custom drawing.
-// An empty implementation adversely affects performance during animation.
-- (void)drawRect:(CGRect)rect {
-    // Drawing code
-}
-*/
 -(void) setup
 {
     self.gathered = NO;
@@ -57,7 +50,7 @@
     return _snap;
 }
 
--(NSMutableArray *)cardCenters
+-(NSMutableArray *)cardCenters //to remember original card locations
 {
     if (!_cardCenters)
         _cardCenters = [[NSMutableArray alloc] init];
@@ -68,7 +61,6 @@
 -(void)gatherCards:(UIPinchGestureRecognizer *)gesture
 {
     if (gesture.state == UIGestureRecognizerStateBegan && self.allowAnimation) {
-        NSLog(@"pinch began");
         CGPoint viewCenter = CGPointMake(self.bounds.size.width/2.0, self.bounds.size.height / 2.0);
         for (CardView *cardView in self.subviews) {
             [self.cardCenters addObject:[NSValue valueWithCGPoint:cardView.center]];  //store original centers to restore cards to original location
@@ -78,10 +70,7 @@
     }
     if (gesture.state == UIGestureRecognizerStateEnded) {
         self.gathered = YES;
-        //        self.snap = nil;
-        //        self.cardAnimator = nil;
         self.allowAnimation = NO;
-        NSLog(@"pinch ended");
     }
 //    [self setNeedsDisplay];
 }
@@ -90,12 +79,10 @@
 {
     [self removeAnimations];
     self.cardsBeingDragged = NO;
-    NSLog(@"ungathering cards");
     int i = 0;
     for (CardView *cardView in self.subviews) {
         CGPoint originalCenter = [self.cardCenters[i] CGPointValue];
         [self.snap addObject:[[UISnapBehavior alloc] initWithItem:cardView snapToPoint:originalCenter]];
-//        self.snap[i]  = [[UISnapBehavior alloc] initWithItem:cardView snapToPoint:originalCenter];
         [self.cardAnimator addBehavior:[self.snap lastObject]];
         i++;
     }
@@ -103,7 +90,7 @@
     [self.cardCenters removeAllObjects];
 }
 
--(void)removeAnimations
+-(void)removeAnimations // called before adding new animations
 {
     [self.cardAnimator removeAllBehaviors];
     self.snap = nil;
@@ -127,7 +114,7 @@
             attach.anchorPoint = finger;
 }
 
--(void)dynamicAnimatorDidPause:(UIDynamicAnimator *)animator
+-(void)dynamicAnimatorDidPause:(UIDynamicAnimator *)animator //this is called when animation movements stop
 {
     if (!self.cardsBeingDragged) [self removeAnimations];
     self.allowAnimation = YES;
